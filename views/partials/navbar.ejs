@@ -1,0 +1,60 @@
+<header class="site-header">
+    <a href="/" class="brand" aria-label="Nine Lives Vintage home">
+        <img
+            src="/images/nine-lives-logo.png"
+            alt="Nine Lives Vintage"
+            class="brand-logo"
+        >
+    </a>
+
+    <nav class="desktop-nav" aria-label="Main navigation">
+        <a href="/" class="<%= currentPage === 'home' ? 'active' : '' %>">
+            Home
+        </a>
+
+        <a href="/shop" class="<%= currentPage === 'shop' ? 'active' : '' %>">
+            Shop
+        </a>
+
+        <a href="/shop?sort=newest">New Arrivals</a>
+        <a href="/shop?department=women">Women</a>
+        <a href="/shop?department=men">Men</a>
+        <a href="/shop?category=accessories">Accessories</a>
+        <a href="/about">About</a>
+    </nav>
+
+    <form class="header-search" action="/shop" method="GET">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path>
+        </svg>
+
+        <input
+            type="search"
+            name="q"
+            placeholder="Search items..."
+            aria-label="Search items"
+        >
+    </form>
+
+    <div class="header-actions">
+        <a href="/account" class="icon-button" aria-label="Account">
+            <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="8" r="4"></circle>
+                <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"></path>
+            </svg>
+        </a>
+
+        <a href="/cart" class="icon-button cart-button" aria-label="Cart">
+            <svg viewBox="0 0 24 24">
+                <path d="M3 4h2l2 11h10l2-7H7"></path>
+                <circle cx="9" cy="20" r="1"></circle>
+                <circle cx="17" cy="20" r="1"></circle>
+            </svg>
+
+            <% if (typeof cartCount !== "undefined" && cartCount > 0) { %>
+                <span class="cart-count"><%= cartCount %></span>
+            <% } %>
+        </a>
+    </div>
+</header>

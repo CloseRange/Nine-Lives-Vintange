@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Nine Lives Vintage</title>
+
+    <link
+        rel="stylesheet"
+        href="/css/shop.css"
+    >
+</head>
+
+<body>
+
+<div class="page-container">
+
+    <%- include("partials/navbar", {
+        currentPage: "home",
+        cartCount: typeof cartCount !== "undefined" ? cartCount : 0
+    }) %>
+
+
+    <!-- =========================
+         HERO
+    ========================== -->
+
+    <main>
+<section class="hero">
+
+    <div class="hero-content">
+
+        <p class="eyebrow">
+            SECONDHAND STYLE, A BRIGHTER TOMORROW
+        </p>
+
+        <h1>
+            Nine Lives<br>
+            Vintage
+        </h1>
+
+        <p class="hero-description">
+            Curated secondhand clothing for a more
+            sustainable (and stylish) future.
+        </p>
+
+        <a href="/shop" class="primary-button">
+            Shop All
+            <span>→</span>
+        </a>
+
+    </div>
+
+    <div class="hero-art">
+        <img
+            src="/images/nine-lives-title.png"
+            alt="Nine Lives Vintage cats"
+            class="hero-title-image"
+        >
+    </div>
+
+</section>
+
+        <!-- =========================
+             CATEGORY CARDS
+        ========================== -->
+<section class="category-grid">
+
+    <a
+        href="/shop?department=women"
+        class="category-card"
+        style="background-image: url('/images/categories/women.png');"
+    >
+        <div class="category-content">
+            <h2>Women</h2>
+
+            <p>
+                Tops, bottoms,<br>
+                dresses & more
+            </p>
+
+            <span class="category-arrow">→</span>
+        </div>
+    </a>
+
+
+    <a
+        href="/shop?department=men"
+        class="category-card"
+        style="background-image: url('/images/categories/men.png');"
+    >
+        <div class="category-content">
+            <h2>Men</h2>
+
+            <p>
+                Tees, hoodies,<br>
+                flannels & more
+            </p>
+
+            <span class="category-arrow">→</span>
+        </div>
+    </a>
+
+
+    <a
+        href="/shop?category=accessories"
+        class="category-card"
+        style="background-image: url('/images/categories/accessory.png');"
+    >
+        <div class="category-content">
+            <h2>Accessories</h2>
+
+            <p>
+                Bags, hats,<br>
+                jewelry & more
+            </p>
+
+            <span class="category-arrow">→</span>
+        </div>
+    </a>
+
+
+    <a
+        href="/shop?sort=newest"
+        class="category-card"
+        style="background-image: url('/images/categories/new-arrivals.png');"
+    >
+        <div class="category-content">
+            <h2>New Arrivals</h2>
+            <p>
+                Fresh finds<br>
+                added regularly
+            </p>
+            <span class="category-arrow">→</span>
+        </div>
+    </a>
+</section>
+
+
+        <!-- =========================
+             PRODUCTS
+        ========================== -->
+
+        <section class="products-section">
+
+            <div class="section-heading">
+
+                <h2>
+                    Latest Finds
+                    <span class="sparkle">✧</span>
+                </h2>
+
+                <a href="/shop" class="view-all">
+                    View All →
+                </a>
+
+            </div>
+
+
+            <!-- Filters -->
+
+            <div class="product-toolbar">
+
+                <div class="filters">
+
+                    <a href="/shop" class="filter active">
+                        All Items
+                    </a>
+
+                    <a href="/shop?department=women" class="filter">
+                        Women
+                    </a>
+
+                    <a href="/shop?department=men" class="filter">
+                        Men
+                    </a>
+
+                    <a href="/shop?category=tops" class="filter">
+                        Tops
+                    </a>
+
+                    <a href="/shop?category=bottoms" class="filter">
+                        Bottoms
+                    </a>
+
+                    <a href="/shop?category=dresses" class="filter">
+                        Dresses
+                    </a>
+
+                    <a href="/shop?category=outerwear" class="filter">
+                        Outerwear
+                    </a>
+
+                    <a href="/shop?category=accessories" class="filter">
+                        Accessories
+                    </a>
+
+                </div>
+
+
+                <form action="/shop" method="GET">
+
+                    <select name="sort" onchange="this.form.submit()">
+                        <option value="newest">
+                            Sort by: Newest
+                        </option>
+
+                        <option value="price-low">
+                            Price: Low to High
+                        </option>
+
+                        <option value="price-high">
+                            Price: High to Low
+                        </option>
+                    </select>
+
+                </form>
+
+            </div>
+
+
+
+            <!-- Product Grid -->
+
+            <div class="product-grid">
+
+                <% if (typeof products !== "undefined" && products.length) { %>
+
+                    <% products.forEach(product => { %>
+
+                        <article class="product-card">
+
+                            <a
+                                href="/product/<%= product.sku %>"
+                                class="product-image"
+                            >
+
+                                <% if (product.images?.length > 0) { %>
+
+                                    <img
+                                        src="<%= product.images[0].image_url %>"
+                                        alt="<%= product.title %>"
+                                        loading="lazy"
+                                    >
+
+                                <% } else { %>
+
+                                    <img
+                                        src="/images/product-placeholder.png"
+                                        alt="No image available"
+                                        loading="lazy"
+                                    >
+
+                                <% } %>
+
+                                <% if (product.badge) { %>
+
+                                    <span class="
+                                        product-badge
+                                        badge-<%= product.badge.toLowerCase() %>
+                                    ">
+                                        <%= product.badge %>
+                                    </span>
+
+                                <% } %>
+
+
+                                <button
+                                    class="favorite-button"
+                                    type="button"
+                                    aria-label="Add <%= product.title %> to favorites"
+                                >
+                                    ♡
+                                </button>
+
+                            </a>
+
+
+                            <div class="product-info">
+
+                                <a
+                                    href="/product/<%= product.sku %>"
+                                    class="product-name"
+                                >
+                                    <%= product.title %>
+                                </a>
+
+
+                                <p class="product-meta">
+
+                                    <%= product.category_id || "Unisex" %>
+
+                                    <% if (product.size) { %>
+                                        · Size <%= product.size %>
+                                    <% } %>
+
+                                </p>
+
+
+                                <div class="product-bottom">
+
+                                    <strong class="product-price">
+                                        $<%= Number(product.price).toFixed(2) %>
+                                    </strong>
+
+
+                                    <form
+                                        action="/cart/add"
+                                        method="POST"
+                                    >
+
+                                        <input
+                                            type="hidden"
+                                            name="sku"
+                                            value="<%= product.sku %>"
+                                        >
+
+                                        <button
+                                            class="add-cart-button"
+                                            type="submit"
+                                            aria-label="Add to cart"
+                                        >
+                                            🛒
+                                        </button>
+
+                                    </form>
+
+                                </div>
+
+                            </div>
+
+                        </article>
+
+                    <% }) %>
+
+
+                <% } else { %>
+
+                    <div class="empty-products">
+
+                        <span>🐾</span>
+
+                        <h3>No items yet</h3>
+
+                        <p>
+                            New finds will be added soon!
+                        </p>
+
+                    </div>
+
+                <% } %>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <%- include("partials/footer") %>
+
+</div>
+
+</body>
+</html>

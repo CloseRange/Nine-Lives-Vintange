@@ -1,0 +1,36 @@
+{
+  "name": "nine-lives-vintange",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "CloseRange",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "server": "node src/server.js",
+    "token:test": "node src/run.js",
+    "ebay:test": "node src/ebay/test_post_listing.js",
+    "openai:text": "node src/ebay/openai_prompt.js",
+    "openai:image": "node src/ebay/openai_image.js",
+    "tunnel:auth": "node src/ebay/ngrok_auth.js",
+    "tunnel:start": "ngrok http 3000 --log=stdout",
+    "kill-ports": "lsof -ti :3000 -ti :3102 -ti :3103 | xargs kill -9 || true"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.8",
+    "axios": "^1.8.2",
+    "bwip-js": "^4.7.0",
+    "dotenv": "^16.4.7",
+    "ebay-oauth-nodejs-client": "^1.2.2",
+    "ejs": "^3.1.10",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "form-data": "^4.0.6",
+    "multer": "^2.2.0",
+    "pdfkit": "^0.17.2",
+    "sharp": "^0.35.4",
+    "supabase": "^2.118.0"
+  }
+}
