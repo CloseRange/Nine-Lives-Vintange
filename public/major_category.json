@@ -1,0 +1,26 @@
+{
+    "Women": [
+        "Women's Top",
+        "Women's T-Shirt",
+        "Women's Pants",
+        "Women's Shorts",
+        "Dress",
+        "Skirt",
+        "Women's Jacket",
+        "Leggings"
+    ],
+    "Men": [
+        "Men's T-Shirt",
+        "Men's Shirt",
+        "Men's Pants",
+        "Men's Shorts",
+        "Men's Jacket"
+    ],
+    "Accessories": [
+        "Hat",
+        "Baseball Cap",
+        "Beanie",
+        "Socks",
+        "Belt"
+    ]
+}

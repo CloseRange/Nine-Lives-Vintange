@@ -1,0 +1,255 @@
+<%
+    const _minorPills = typeof minorPills !== "undefined" ? minorPills : [];
+    const _activeCategories = typeof activeCategories !== "undefined" ? activeCategories : [];
+    const _activeDepartment = typeof activeDepartment !== "undefined" ? activeDepartment : "";
+%>
+
+<div class="shop-layout">
+
+    <!-- Filters (desktop sidebar) -->
+
+    <aside class="filters-sidebar">
+
+        <div class="filters-sidebar-header">
+            <h3>Filters</h3>
+
+            <% if (_activeCategories.length) { %>
+                <a
+                    href="/shop<%= _activeDepartment ? '?department=' + _activeDepartment : '' %>"
+                    class="filters-clear"
+                >
+                    Clear all
+                </a>
+            <% } %>
+        </div>
+
+        <form action="/shop" method="GET" class="filters-form">
+
+            <% if (_activeDepartment) { %>
+                <input type="hidden" name="department" value="<%= _activeDepartment %>">
+            <% } %>
+
+            <% _minorPills.filter(pill => pill.slug !== "all").forEach(pill => { %>
+
+                <label class="filter-checkbox">
+                    <input
+                        type="checkbox"
+                        name="category"
+                        value="<%= pill.slug %>"
+                        onchange="this.form.submit()"
+                        <%= _activeCategories.includes(pill.slug) ? "checked" : "" %>
+                    >
+                    <span><%= pill.label %></span>
+                </label>
+
+            <% }) %>
+
+        </form>
+
+    </aside>
+
+    <div class="products-column">
+
+        <!-- Filters (mobile pills) -->
+
+        <div class="product-toolbar">
+
+            <div class="filters">
+
+                <% _minorPills.forEach(pill => { %>
+
+                    <%
+                        const isAllPill = pill.slug === "all";
+                        const isActivePill = isAllPill ? _activeCategories.length === 0 : _activeCategories.includes(pill.slug);
+                        const pillHref = "/shop?" + (_activeDepartment ? "department=" + _activeDepartment + "&" : "") + (isAllPill ? "" : "category=" + pill.slug);
+                    %>
+
+                    <a
+                        href="<%= pillHref %>"
+                        class="filter <%= isActivePill ? 'active' : '' %>"
+                    >
+                        <%= pill.label %>
+                    </a>
+
+                <% }) %>
+
+            </div>
+
+
+            <form action="/shop" method="GET">
+
+                <% if (_activeDepartment) { %>
+                    <input type="hidden" name="department" value="<%= _activeDepartment %>">
+                <% } %>
+
+                <% _activeCategories.forEach(cat => { %>
+                    <input type="hidden" name="category" value="<%= cat %>">
+                <% }) %>
+
+                <select name="sort" onchange="this.form.submit()">
+                    <option value="newest">
+                        Sort by: Newest
+                    </option>
+
+                    <option value="price-low">
+                        Price: Low to High
+                    </option>
+
+                    <option value="price-high">
+                        Price: High to Low
+                    </option>
+                </select>
+
+            </form>
+
+        </div>
+
+
+        <!-- Product Grid -->
+
+        <div class="product-grid">
+
+    <% if (typeof products !== "undefined" && products.length) { %>
+
+        <% products.forEach(product => { %>
+
+            <article class="product-card">
+
+                <a
+                    href="/product/<%= product.sku %>"
+                    class="product-image"
+                >
+
+                    <% if (product.images?.length > 0) { %>
+
+                        <img
+                            src="<%= product.images[0].image_url %>"
+                            alt="<%= product.title %>"
+                            loading="lazy"
+                            class="product-image-primary"
+                        >
+
+                    <% } else { %>
+
+                        <img
+                            src="/images/product-placeholder.png"
+                            alt="No image available"
+                            loading="lazy"
+                            class="product-image-primary"
+                        >
+
+                    <% } %>
+
+                    <% if (product.images?.length > 1) { %>
+
+                        <img
+                            src="<%= product.images[1].image_url %>"
+                            alt="<%= product.title %>"
+                            loading="lazy"
+                            class="product-image-secondary"
+                        >
+
+                    <% } %>
+
+                    <% if (product.badge) { %>
+
+                        <span class="
+                            product-badge
+                            badge-<%= product.badge.toLowerCase() %>
+                        ">
+                            <%= product.badge %>
+                        </span>
+
+                    <% } %>
+
+
+                    <button
+                        class="favorite-button"
+                        type="button"
+                        aria-label="Add <%= product.title %> to favorites"
+                    >
+                        <span class="icon icon-heart"></span>
+                    </button>
+
+                </a>
+
+
+                <div class="product-info">
+
+                    <a
+                        href="/product/<%= product.sku %>"
+                        class="product-name"
+                    >
+                        <%= product.title %>
+                    </a>
+
+
+                    <p class="product-meta">
+
+                        <%= product.category_id || "Unisex" %>
+
+                        <% if (product.size) { %>
+                            · Size <%= product.size %>
+                        <% } %>
+
+                    </p>
+
+
+                    <div class="product-bottom">
+
+                        <strong class="product-price">
+                            $<%= Number(product.price).toFixed(2) %>
+                        </strong>
+
+
+                        <form
+                            action="/cart/add"
+                            method="POST"
+                        >
+
+                            <input
+                                type="hidden"
+                                name="sku"
+                                value="<%= product.sku %>"
+                            >
+
+                            <button
+                                class="add-cart-button"
+                                type="submit"
+                                aria-label="Add to cart"
+                            >
+                                <span class="icon icon-cart"></span>
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            </article>
+
+        <% }) %>
+
+
+    <% } else { %>
+
+        <div class="empty-products">
+
+            <span class="icon icon-paw"></span>
+
+            <h3>No items yet</h3>
+
+            <p>
+                New finds will be added soon!
+            </p>
+
+        </div>
+
+    <% } %>
+
+        </div>
+
+    </div>
+
+</div>

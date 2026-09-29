@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Nine Lives Vintage — <%= departmentLabel %></title>
+
+    <link
+        rel="stylesheet"
+        href="/css/shop.css"
+    >
+</head>
+
+<body>
+
+<div class="page-container">
+
+    <%- include("partials/navbar", {
+        currentPage: "shop",
+        cartCount: typeof cartCount !== "undefined" ? cartCount : 0
+    }) %>
+
+    <main>
+
+        <section class="department-banner">
+
+            <div
+                class="department-banner-image"
+                <% if (typeof departmentBanner !== "undefined" && departmentBanner) { %>
+                    style="background-image: url('<%= departmentBanner %>');"
+                <% } %>
+            ></div>
+
+            <div class="department-banner-content">
+
+                <p class="breadcrumb">
+                    <a href="/shop">Shop</a>
+                    <span class="icon icon-arrow-right"></span>
+                    <span><%= departmentLabel %></span>
+                </p>
+
+                <h1><%= typeof departmentTitle !== "undefined" ? departmentTitle : departmentLabel %></h1>
+
+                <% if (typeof departmentDescription !== "undefined" && departmentDescription) { %>
+                    <p class="department-description">
+                        <%= departmentDescription %>
+                    </p>
+                <% } %>
+
+                <p class="department-count">
+                    <%= products.length %> item<%= products.length === 1 ? "" : "s" %>
+                </p>
+
+            </div>
+
+        </section>
+
+        <section class="products-section">
+
+            <%- include("partials/product-grid", {
+                products,
+                minorPills: typeof minorPills !== "undefined" ? minorPills : [],
+                activeCategories: typeof activeCategories !== "undefined" ? activeCategories : [],
+                activeDepartment: typeof activeDepartment !== "undefined" ? activeDepartment : ""
+            }) %>
+
+        </section>
+
+    </main>
+
+    <%- include("partials/footer") %>
+
+</div>
+
+</body>
+</html>

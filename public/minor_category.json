@@ -1,0 +1,47 @@
+{
+    "Women": [
+        "Women's Top",
+        "Women's T-Shirt",
+        "Women's Pants",
+        "Women's Shorts",
+        "Dress",
+        "Skirt",
+        "Women's Jacket",
+        "Leggings"
+    ],
+    "Men": [
+        "Men's T-Shirt",
+        "Men's Shirt",
+        "Men's Pants",
+        "Men's Shorts",
+        "Men's Jacket"
+    ],
+    "Tops": [
+        "Women's Top",
+        "Women's T-Shirt",
+        "Men's T-Shirt",
+        "Men's Shirt"
+    ],
+    "Bottoms": [
+        "Women's Pants",
+        "Women's Shorts",
+        "Men's Pants",
+        "Men's Shorts",
+        "Leggings",
+        "Skirt",
+        "Jeans"
+    ],
+    "Outerwear": [
+        "Women's Jacket",
+        "Men's Jacket",
+        "Hoodie",
+        "Sweater"
+    ],
+    "Shoes": [
+        "Women's Shoes",
+        "Men's Shoes",
+        "Sneakers",
+        "Boots",
+        "Sandals"
+    ]
+}

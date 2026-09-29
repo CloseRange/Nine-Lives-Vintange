@@ -51,7 +51,7 @@
 
         <a href="/shop" class="primary-button">
             Shop All
-            <span>→</span>
+            <span class="icon icon-arrow-right"></span>
         </a>
 
     </div>
@@ -84,7 +84,12 @@
                 dresses & more
             </p>
 
-            <span class="category-arrow">→</span>
+            <span class="category-arrow"><span class="icon icon-arrow-right"></span></span>
+        </div>
+
+        <div class="category-mobile">
+            <span class="category-circle" style="background-image: url('/images/categories/women-small.png');"></span>
+            <span class="category-label">Women</span>
         </div>
     </a>
 
@@ -102,13 +107,18 @@
                 flannels & more
             </p>
 
-            <span class="category-arrow">→</span>
+            <span class="category-arrow"><span class="icon icon-arrow-right"></span></span>
+        </div>
+
+        <div class="category-mobile">
+            <span class="category-circle" style="background-image: url('/images/categories/men-small.png');"></span>
+            <span class="category-label">Men</span>
         </div>
     </a>
 
 
     <a
-        href="/shop?category=accessories"
+        href="/shop?department=accessories"
         class="category-card"
         style="background-image: url('/images/categories/accessory.png');"
     >
@@ -120,13 +130,18 @@
                 jewelry & more
             </p>
 
-            <span class="category-arrow">→</span>
+            <span class="category-arrow"><span class="icon icon-arrow-right"></span></span>
+        </div>
+
+        <div class="category-mobile">
+            <span class="category-circle" style="background-image: url('/images/categories/accessory-small.png');"></span>
+            <span class="category-label">Accessories</span>
         </div>
     </a>
 
 
     <a
-        href="/shop?sort=newest"
+        href="/shop?department=new-arrivals"
         class="category-card"
         style="background-image: url('/images/categories/new-arrivals.png');"
     >
@@ -136,7 +151,12 @@
                 Fresh finds<br>
                 added regularly
             </p>
-            <span class="category-arrow">→</span>
+            <span class="category-arrow"><span class="icon icon-arrow-right"></span></span>
+        </div>
+
+        <div class="category-mobile">
+            <span class="category-circle" style="background-image: url('/images/categories/new-arrivals-small.png');"></span>
+            <span class="category-label">New Arrivals</span>
         </div>
     </a>
 </section>
@@ -156,206 +176,18 @@
                 </h2>
 
                 <a href="/shop" class="view-all">
-                    View All →
+                    View All <span class="icon icon-arrow-right"></span>
                 </a>
 
             </div>
 
 
-            <!-- Filters -->
-
-            <div class="product-toolbar">
-
-                <div class="filters">
-
-                    <a href="/shop" class="filter active">
-                        All Items
-                    </a>
-
-                    <a href="/shop?department=women" class="filter">
-                        Women
-                    </a>
-
-                    <a href="/shop?department=men" class="filter">
-                        Men
-                    </a>
-
-                    <a href="/shop?category=tops" class="filter">
-                        Tops
-                    </a>
-
-                    <a href="/shop?category=bottoms" class="filter">
-                        Bottoms
-                    </a>
-
-                    <a href="/shop?category=dresses" class="filter">
-                        Dresses
-                    </a>
-
-                    <a href="/shop?category=outerwear" class="filter">
-                        Outerwear
-                    </a>
-
-                    <a href="/shop?category=accessories" class="filter">
-                        Accessories
-                    </a>
-
-                </div>
-
-
-                <form action="/shop" method="GET">
-
-                    <select name="sort" onchange="this.form.submit()">
-                        <option value="newest">
-                            Sort by: Newest
-                        </option>
-
-                        <option value="price-low">
-                            Price: Low to High
-                        </option>
-
-                        <option value="price-high">
-                            Price: High to Low
-                        </option>
-                    </select>
-
-                </form>
-
-            </div>
-
-
-
-            <!-- Product Grid -->
-
-            <div class="product-grid">
-
-                <% if (typeof products !== "undefined" && products.length) { %>
-
-                    <% products.forEach(product => { %>
-
-                        <article class="product-card">
-
-                            <a
-                                href="/product/<%= product.sku %>"
-                                class="product-image"
-                            >
-
-                                <% if (product.images?.length > 0) { %>
-
-                                    <img
-                                        src="<%= product.images[0].image_url %>"
-                                        alt="<%= product.title %>"
-                                        loading="lazy"
-                                    >
-
-                                <% } else { %>
-
-                                    <img
-                                        src="/images/product-placeholder.png"
-                                        alt="No image available"
-                                        loading="lazy"
-                                    >
-
-                                <% } %>
-
-                                <% if (product.badge) { %>
-
-                                    <span class="
-                                        product-badge
-                                        badge-<%= product.badge.toLowerCase() %>
-                                    ">
-                                        <%= product.badge %>
-                                    </span>
-
-                                <% } %>
-
-
-                                <button
-                                    class="favorite-button"
-                                    type="button"
-                                    aria-label="Add <%= product.title %> to favorites"
-                                >
-                                    ♡
-                                </button>
-
-                            </a>
-
-
-                            <div class="product-info">
-
-                                <a
-                                    href="/product/<%= product.sku %>"
-                                    class="product-name"
-                                >
-                                    <%= product.title %>
-                                </a>
-
-
-                                <p class="product-meta">
-
-                                    <%= product.category_id || "Unisex" %>
-
-                                    <% if (product.size) { %>
-                                        · Size <%= product.size %>
-                                    <% } %>
-
-                                </p>
-
-
-                                <div class="product-bottom">
-
-                                    <strong class="product-price">
-                                        $<%= Number(product.price).toFixed(2) %>
-                                    </strong>
-
-
-                                    <form
-                                        action="/cart/add"
-                                        method="POST"
-                                    >
-
-                                        <input
-                                            type="hidden"
-                                            name="sku"
-                                            value="<%= product.sku %>"
-                                        >
-
-                                        <button
-                                            class="add-cart-button"
-                                            type="submit"
-                                            aria-label="Add to cart"
-                                        >
-                                            🛒
-                                        </button>
-
-                                    </form>
-
-                                </div>
-
-                            </div>
-
-                        </article>
-
-                    <% }) %>
-
-
-                <% } else { %>
-
-                    <div class="empty-products">
-
-                        <span>🐾</span>
-
-                        <h3>No items yet</h3>
-
-                        <p>
-                            New finds will be added soon!
-                        </p>
-
-                    </div>
-
-                <% } %>
-
-            </div>
+            <%- include("partials/product-grid", {
+                products,
+                minorPills: typeof minorPills !== "undefined" ? minorPills : [],
+                activeCategories: typeof activeCategories !== "undefined" ? activeCategories : [],
+                activeDepartment: typeof activeDepartment !== "undefined" ? activeDepartment : ""
+            }) %>
 
         </section>
 
