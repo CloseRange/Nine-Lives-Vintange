@@ -8,6 +8,7 @@
     const _activeBrands = typeof activeBrands !== "undefined" ? activeBrands : [];
     const _activeSizes = typeof activeSizes !== "undefined" ? activeSizes : [];
     const _activeDepartment = typeof activeDepartment !== "undefined" ? activeDepartment : "";
+    const _cartSkus = typeof cartSkus !== "undefined" && Array.isArray(cartSkus) ? cartSkus : [];
 %>
 
 <div class="shop-layout">
@@ -287,26 +288,25 @@
                         </strong>
 
 
-                        <form
-                            action="/cart/add"
-                            method="POST"
-                        >
-
-                            <input
-                                type="hidden"
-                                name="sku"
-                                value="<%= product.sku %>"
-                            >
-
-                            <button
-                                class="add-cart-button"
-                                type="submit"
-                                aria-label="Add to cart"
-                            >
-                                <span class="icon icon-cart"></span>
-                            </button>
-
-                        </form>
+                        <% if (_cartSkus.includes(String(product.sku))) { %>
+                            <a class="add-cart-button is-in-cart" href="/cart" aria-label="View cart">
+                                <span class="add-cart-circle">
+                                    <span class="icon icon-check"></span>
+                                </span>
+                                <span class="add-cart-label">In Cart</span>
+                            </a>
+                        <% } else { %>
+                            <form action="/cart/add" method="POST" data-cart-add-form>
+                                <input type="hidden" name="sku" value="<%= product.sku %>">
+                                <button class="add-cart-button" type="submit" aria-label="Add to cart">
+                                    <span class="add-cart-circle">
+                                        <span class="icon icon-cart"></span>
+                                        <span class="icon icon-check"></span>
+                                    </span>
+                                    <span class="add-cart-label">In Cart</span>
+                                </button>
+                            </form>
+                        <% } %>
 
                     </div>
 
@@ -338,3 +338,60 @@
     </div>
 
 </div>
+
+<script>
+    document.addEventListener('submit', async (event) => {
+        const form = event.target.closest('[data-cart-add-form]');
+        if (!form) return;
+
+        event.preventDefault();
+        const button = form.querySelector('button[type="submit"]');
+        if (!button || button.disabled) return;
+
+        button.disabled = true;
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+                },
+                body: new URLSearchParams(new FormData(form))
+            });
+            const result = await response.json();
+            if (!response.ok || !result.ok) throw new Error(result.error || 'Could not add item to cart.');
+
+            button.classList.add('is-in-cart', 'just-added');
+            button.dataset.inCart = 'true';
+            button.setAttribute('aria-label', 'View cart');
+            button.innerHTML = '<span class="add-cart-circle"><span class="icon icon-cart"></span><span class="icon icon-check"></span></span><span class="add-cart-label">In Cart</span>';
+            button.disabled = false;
+
+            const cartLink = document.querySelector('[data-cart-button]');
+            if (cartLink) {
+                let count = cartLink.querySelector('[data-cart-count]');
+                if (!count) {
+                    count = document.createElement('span');
+                    count.className = 'cart-count';
+                    count.setAttribute('data-cart-count', '');
+                    cartLink.append(count);
+                }
+                count.textContent = result.cartCount;
+            }
+
+            window.setTimeout(() => button.classList.remove('just-added'), 320);
+        } catch (error) {
+            console.error('[CART] Failed to add item:', error);
+            button.disabled = false;
+        }
+    });
+
+    document.addEventListener('click', (event) => {
+        const button = event.target.closest('button[data-in-cart="true"]');
+        if (!button) return;
+
+        event.preventDefault();
+        window.location.assign('/cart');
+    });
+</script>

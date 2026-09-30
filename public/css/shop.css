@@ -337,6 +337,11 @@ img {
     mask-image: url('/icons/shopping-cart.svg');
 }
 
+.icon-check {
+    -webkit-mask-image: url('/icons/check.svg');
+    mask-image: url('/icons/check.svg');
+}
+
 .icon-user {
     -webkit-mask-image: url('/icons/user.svg');
     mask-image: url('/icons/user.svg');
@@ -1170,29 +1175,120 @@ img {
     width: 40px;
     height: 40px;
 
-    display: grid;
-    place-items: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 
     border: 0;
-    border-radius: 50%;
+    border-radius: var(--radius-pill);
 
-    background: var(--color-lavender-light);
+    padding: 0;
+    background: transparent;
 
     color: var(--color-plum);
+    white-space: nowrap;
 
     transition:
         background var(--transition),
         transform var(--transition);
 }
 
-.add-cart-button .icon {
+.add-cart-circle {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 50%;
+    background: var(--color-lavender-light);
+
+    transition: background var(--transition);
+}
+
+.add-cart-circle .icon {
     width: 18px;
     height: 18px;
+    grid-area: 1 / 1;
+}
+
+.add-cart-circle .icon-check {
+    opacity: 0;
+    transform: scale(0.55);
+}
+
+.add-cart-label {
+    display: none;
+    font-size: 13px;
+    font-weight: 600;
 }
 
 .add-cart-button:hover {
-    background: var(--color-lavender);
     transform: scale(1.08);
+}
+
+.add-cart-button:hover .add-cart-circle {
+    background: var(--color-lavender);
+}
+
+.add-cart-button.is-in-cart {
+    width: auto;
+    justify-content: flex-start;
+    padding-right: 10px;
+    color: var(--color-plum);
+}
+
+.add-cart-button.is-in-cart .add-cart-circle {
+    background: var(--color-lavender);
+}
+
+.add-cart-button.is-in-cart .icon-cart {
+    opacity: 0;
+    transform: scale(0.65);
+}
+
+.add-cart-button.is-in-cart .icon-check {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.add-cart-button.is-in-cart .add-cart-label {
+    display: inline;
+}
+
+.add-cart-button.just-added .add-cart-circle {
+    animation: cart-circle-bounce 250ms ease-out;
+}
+
+.add-cart-button.just-added .icon-cart {
+    animation: cart-icon-shrink 250ms ease-in forwards;
+}
+
+.add-cart-button.just-added .icon-check {
+    animation: cart-check-pop 250ms ease-out 55ms both;
+}
+
+@keyframes cart-circle-bounce {
+    50% { transform: scale(1.1); }
+}
+
+@keyframes cart-icon-shrink {
+    to { opacity: 0; transform: scale(0.55); }
+}
+
+@keyframes cart-check-pop {
+    to { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .add-cart-button.just-added .add-cart-circle,
+    .add-cart-button.just-added .icon-cart,
+    .add-cart-button.just-added .icon-check {
+        animation-duration: 1ms;
+        animation-delay: 0ms;
+    }
 }
 
 

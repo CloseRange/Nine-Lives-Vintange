@@ -724,6 +724,7 @@ app.use(
 );
 app.use((req, res, next) => {
     res.locals.cartCount = Array.isArray(req.session.cart) ? req.session.cart.length : 0;
+    res.locals.cartSkus = getSessionCart(req);
     next();
 });
 
