@@ -10,6 +10,8 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "server": "node src/server.js",
+    "stripe": "stripe listen --forward-to localhost:3000/webhooks/stripe",
+    "stripe:listen": "stripe listen --forward-to localhost:3000/webhooks/stripe",
     "token:test": "node src/run.js",
     "ebay:test": "node src/ebay/test_post_listing.js",
     "openai:text": "node src/ebay/openai_prompt.js",
@@ -31,6 +33,7 @@
     "multer": "^2.2.0",
     "pdfkit": "^0.17.2",
     "sharp": "^0.35.4",
+    "stripe": "^22.6.2",
     "supabase": "^2.118.0",
     "ws": "^8.22.0"
   }

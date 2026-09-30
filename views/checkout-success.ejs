@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Nine Lives Vintage — Order Complete</title>
+
+    <link
+        rel="stylesheet"
+        href="/css/shop.css"
+    >
+</head>
+
+<body>
+
+<div class="page-container">
+
+    <%- include("partials/navbar", {
+        currentPage: "cart",
+        cartCount: typeof cartCount !== "undefined" ? cartCount : 0
+    }) %>
+
+    <main class="cart-page">
+        <section class="cart-empty-state checkout-success-state">
+            <span class="icon icon-paw"></span>
+            <h2>Order complete</h2>
+            <p>
+                Your Stripe checkout was successful. Your cart has been cleared and your vintage finds are on the way.
+            </p>
+            <a href="/shop" class="primary-button">
+                Keep Browsing
+                <span class="icon icon-arrow-right"></span>
+            </a>
+        </section>
+    </main>
+
+    <%- include("partials/footer") %>
+
+</div>
+
+</body>
+</html>

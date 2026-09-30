@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Nine Lives Vintage — Checkout</title>
+
+    <link
+        rel="stylesheet"
+        href="/css/shop.css"
+    >
+</head>
+
+<body>
+
+<div class="page-container">
+
+    <%- include("partials/navbar", {
+        currentPage: "cart",
+        cartCount: typeof cartCount !== "undefined" ? cartCount : 0
+    }) %>
+
+    <main class="cart-page checkout-page">
+
+        <section class="cart-hero checkout-hero">
+            <div class="cart-hero-copy">
+                <p class="eyebrow">CHECKOUT</p>
+                <h1>Almost there</h1>
+                <p class="cart-hero-description">
+                    Confirm what is in your bag, then sign in or continue as a guest to move forward.
+                </p>
+            </div>
+
+            <div class="cart-hero-summary">
+                <div>
+                    <span class="cart-summary-label">Items</span>
+                    <strong class="cart-summary-value"><%= cartItems.length %></strong>
+                </div>
+
+                <div>
+                    <span class="cart-summary-label">Subtotal</span>
+                    <strong class="cart-summary-value">$<%= Number(subtotal || 0).toFixed(2) %></strong>
+                </div>
+
+                <div>
+                    <span class="cart-summary-label">Shipping</span>
+                    <strong class="cart-summary-value">$<%= Number(shipping || 0).toFixed(2) %></strong>
+                </div>
+
+                <div>
+                    <span class="cart-summary-label">Total</span>
+                    <strong class="cart-summary-value">$<%= Number(total || 0).toFixed(2) %></strong>
+                </div>
+
+                <span class="cart-summary-secondary-link cart-summary-static-note">
+                    Guest checkout available
+                </span>
+            </div>
+        </section>
+
+        <section class="cart-layout checkout-layout">
+            <div class="cart-items-column">
+                <% cartItems.forEach(item => { %>
+                    <article class="cart-item-card checkout-item-card">
+                        <a href="/product/<%= item.sku %>" class="cart-item-image-wrap">
+                            <% if (item.images && item.images.length) { %>
+                                <img
+                                    src="<%= item.images[0].image_url %>"
+                                    alt="<%= item.title %>"
+                                    class="cart-item-image"
+                                >
+                            <% } else { %>
+                                <img
+                                    src="/images/product-placeholder.png"
+                                    alt="No image available"
+                                    class="cart-item-image"
+                                >
+                            <% } %>
+                        </a>
+
+                        <div class="cart-item-content">
+                            <div class="cart-item-header">
+                                <div>
+                                    <p class="cart-item-kicker"><%= item.category_id || 'Unisex' %></p>
+                                    <h2>
+                                        <a href="/product/<%= item.sku %>"><%= item.title %></a>
+                                    </h2>
+                                </div>
+
+                                <strong class="cart-item-price">$<%= Number(item.price || 0).toFixed(2) %></strong>
+                            </div>
+
+                            <p class="cart-item-description">
+                                <%= item.description || 'Unique vintage piece ready for a new life.' %>
+                            </p>
+
+                            <div class="cart-item-footer">
+                                <div class="cart-item-meta">
+                                    <span>SKU <%= item.sku %></span>
+                                    <span class="cart-item-badge">ONE OF ONE</span>
+                                </div>
+
+                                <form action="/cart/remove" method="POST">
+                                    <input type="hidden" name="sku" value="<%= item.sku %>">
+                                    <button type="submit" class="cart-remove-button">Remove</button>
+                                </form>
+                            </div>
+                        </div>
+                    </article>
+                <% }) %>
+            </div>
+
+            <aside class="cart-summary-panel">
+                <p class="cart-summary-panel-eyebrow">Order Summary</p>
+                <h3>Checkout preview</h3>
+
+                <% if (typeof checkoutError !== "undefined" && checkoutError) { %>
+                    <div class="checkout-error-note">
+                        <%= checkoutError %>
+                    </div>
+                <% } %>
+
+                <div class="cart-summary-lines">
+                    <div>
+                        <span>Items</span>
+                        <strong><%= cartItems.length %></strong>
+                    </div>
+
+                    <div>
+                        <span>Subtotal</span>
+                        <strong>$<%= Number(subtotal || 0).toFixed(2) %></strong>
+                    </div>
+
+                    <div>
+                        <span>Shipping</span>
+                        <strong>$<%= Number(shipping || 0).toFixed(2) %></strong>
+                    </div>
+
+                    <div>
+                        <span>Tax</span>
+                        <strong>Calculated by Stripe</strong>
+                    </div>
+
+                    <div>
+                        <span>Estimated total</span>
+                        <strong>$<%= Number(total || 0).toFixed(2) %></strong>
+                    </div>
+                </div>
+
+                <form action="/checkout/stripe" method="POST" class="checkout-stripe-form">
+                    <button type="submit" class="primary-button cart-checkout-button">
+                        Continue to Stripe Checkout
+                        <span class="icon icon-arrow-right"></span>
+                    </button>
+                </form>
+
+                <div class="checkout-stripe-brand-note">
+                    Secure payment hosted by Stripe.
+                    <span>Cards, wallets, and promotions supported.</span>
+                </div>
+
+                <% if (isLoggedIn) { %>
+                    <div class="checkout-ready-note">
+                        You are signed in. Your checkout flow is ready once payment is connected.
+                    </div>
+                <% } else { %>
+                    <div class="checkout-guest-note">
+                        Sign in to keep this order tied to your account, or continue as a guest.
+                    </div>
+                <% } %>
+            </aside>
+        </section>
+
+    </main>
+
+    <%- include("partials/footer") %>
+
+</div>
+
+<% if (!isLoggedIn) { %>
+    <div class="cart-login-overlay is-visible" data-cart-login-overlay aria-hidden="false">
+        <div class="cart-login-modal checkout-login-modal" role="dialog" aria-modal="true" aria-labelledby="cart-login-title">
+            <p class="eyebrow">CHECKOUT ACCESS</p>
+            <h2 id="cart-login-title">Log in or continue as guest</h2>
+            <p class="cart-login-description">
+                Signing in keeps this checkout tied to your account. If you just want to finish as a guest, keep going from here.
+            </p>
+
+            <div class="cart-login-actions">
+                <a href="/account" class="primary-button cart-login-button">
+                    Log In
+                    <span class="icon icon-arrow-right"></span>
+                </a>
+
+                <button type="button" class="cart-guest-button" data-cart-guest-continue>
+                    Continue as Guest
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const overlay = document.querySelector('[data-cart-login-overlay]');
+            const guestButtons = document.querySelectorAll('[data-cart-guest-continue]');
+
+            if (!overlay) {
+                return;
+            }
+
+            const storageKey = 'nvl-cart-guest-dismissed';
+            const shouldHide = window.sessionStorage.getItem(storageKey) === '1';
+
+            const hideOverlay = () => {
+                overlay.classList.remove('is-visible');
+                overlay.setAttribute('aria-hidden', 'true');
+            };
+
+            if (shouldHide) {
+                hideOverlay();
+            }
+
+            guestButtons.forEach((button) => {
+                button.addEventListener('click', () => {
+                    window.sessionStorage.setItem(storageKey, '1');
+                    hideOverlay();
+                });
+            });
+        }());
+    </script>
+<% } %>
+
+</body>
+</html>

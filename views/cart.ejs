@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Nine Lives Vintage — Cart</title>
+
+    <link
+        rel="stylesheet"
+        href="/css/shop.css"
+    >
+</head>
+
+<body>
+
+<div class="page-container">
+
+    <%- include("partials/navbar", {
+        currentPage: "cart",
+        cartCount: typeof cartCount !== "undefined" ? cartCount : 0
+    }) %>
+
+    <main class="cart-page">
+
+        <% if (!isLoggedIn) { %>
+            <section class="cart-login-note">
+                <p>
+                    You are viewing this cart as a guest.
+                </p>
+                <p>
+                    Sign in to keep this cart tied to your account, or continue as guest at checkout.
+                </p>
+
+                <div class="cart-login-note-actions">
+                    <a href="/account" class="cart-sign-in-button">Sign in</a>
+                </div>
+            </section>
+        <% } %>
+
+        <% if (cartItems.length) { %>
+            <section class="cart-layout">
+                <div class="cart-items-column">
+                    <% cartItems.forEach(item => { %>
+                        <article class="cart-item-card">
+                            <a href="/product/<%= item.sku %>" class="cart-item-image-wrap">
+                                <% if (item.images && item.images.length) { %>
+                                    <img
+                                        src="<%= item.images[0].image_url %>"
+                                        alt="<%= item.title %>"
+                                        class="cart-item-image"
+                                    >
+                                <% } else { %>
+                                    <img
+                                        src="/images/product-placeholder.png"
+                                        alt="No image available"
+                                        class="cart-item-image"
+                                    >
+                                <% } %>
+                            </a>
+
+                            <div class="cart-item-content">
+                                <div class="cart-item-header">
+                                    <div>
+                                        <p class="cart-item-kicker"><%= item.category_id || 'Unisex' %></p>
+                                        <h2>
+                                            <a href="/product/<%= item.sku %>"><%= item.title %></a>
+                                        </h2>
+                                    </div>
+
+                                    <strong class="cart-item-price">$<%= Number(item.price || 0).toFixed(2) %></strong>
+                                </div>
+
+                                <p class="cart-item-description">
+                                    <%= item.description || 'Unique vintage piece ready for a new life.' %>
+                                </p>
+
+                                <div class="cart-item-footer">
+                                    <div class="cart-item-meta">
+                                        <span>SKU <%= item.sku %></span>
+                                        <span class="cart-item-badge">ONE OF ONE</span>
+                                    </div>
+
+                                    <form action="/cart/remove" method="POST">
+                                        <input type="hidden" name="sku" value="<%= item.sku %>">
+                                        <button type="submit" class="cart-remove-button">Remove</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </article>
+                    <% }) %>
+                </div>
+
+                <aside class="cart-summary-panel">
+                    <p class="cart-summary-panel-eyebrow">Order Summary</p>
+                    <h3>Ready when you are</h3>
+
+                    <div class="cart-summary-lines">
+                        <div>
+                            <span>Items</span>
+                            <strong><%= cartItems.length %></strong>
+                        </div>
+
+                        <div>
+                            <span>Subtotal</span>
+                            <strong>$<%= Number(subtotal || 0).toFixed(2) %></strong>
+                        </div>
+
+                        <div>
+                            <span>Shipping</span>
+                            <strong>$<%= Number(shipping || 0).toFixed(2) %></strong>
+                        </div>
+
+                        <div>
+                            <span>Tax</span>
+                            <strong>Calculated at checkout</strong>
+                        </div>
+
+                        <div>
+                            <span>Estimated total</span>
+                            <strong>$<%= Number(total || 0).toFixed(2) %></strong>
+                        </div>
+                    </div>
+
+                    <form action="/checkout/stripe" method="POST" class="cart-checkout-form">
+                        <button type="submit" class="primary-button cart-checkout-button">
+                            Checkout with Stripe
+                            <span class="icon icon-arrow-right"></span>
+                        </button>
+                    </form>
+                </aside>
+            </section>
+        <% } else { %>
+            <section class="cart-empty-state">
+                <img
+                    src="/images/nine-lives-title.png"
+                    alt="Nine Lives Vintage cats"
+                    class="cart-empty-art"
+                >
+
+                <h2>Nothing collected yet</h2>
+                <p>
+                    Your cart is looking a little lonely. Go find something worth giving another life.
+                </p>
+                <a href="/shop" class="primary-button">
+                    Browse Vintage
+                    <span class="icon icon-arrow-right"></span>
+                </a>
+            </section>
+        <% } %>
+
+    </main>
+
+    <%- include("partials/footer") %>
+
+</div>
+
+</body>
+</html>

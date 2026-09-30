@@ -185,7 +185,13 @@
             <%- include("partials/product-grid", {
                 products,
                 minorPills: typeof minorPills !== "undefined" ? minorPills : [],
+                colorFilters: typeof colorFilters !== "undefined" ? colorFilters : [],
+                brandFilters: typeof brandFilters !== "undefined" ? brandFilters : [],
+                sizeFilters: typeof sizeFilters !== "undefined" ? sizeFilters : [],
                 activeCategories: typeof activeCategories !== "undefined" ? activeCategories : [],
+                activeColors: typeof activeColors !== "undefined" ? activeColors : [],
+                activeBrands: typeof activeBrands !== "undefined" ? activeBrands : [],
+                activeSizes: typeof activeSizes !== "undefined" ? activeSizes : [],
                 activeDepartment: typeof activeDepartment !== "undefined" ? activeDepartment : ""
             }) %>
 

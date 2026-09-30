@@ -42,11 +42,11 @@
             <span class="icon icon-user"></span>
         </a>
 
-        <a href="/cart" class="icon-button cart-button" aria-label="Cart">
+        <a href="/cart" class="icon-button cart-button" aria-label="Cart" data-cart-button>
             <span class="icon icon-cart"></span>
 
             <% if (typeof cartCount !== "undefined" && cartCount > 0) { %>
-                <span class="cart-count"><%= cartCount %></span>
+                <span class="cart-count" data-cart-count><%= cartCount %></span>
             <% } %>
         </a>
     </div>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Nine Lives Vintage — Checkout Canceled</title>
+
+    <link
+        rel="stylesheet"
+        href="/css/shop.css"
+    >
+</head>
+
+<body>
+
+<div class="page-container">
+
+    <%- include("partials/navbar", {
+        currentPage: "cart",
+        cartCount: typeof cartCount !== "undefined" ? cartCount : 0
+    }) %>
+
+    <main class="cart-page">
+        <section class="cart-empty-state checkout-success-state">
+            <span class="icon icon-paw"></span>
+            <h2>Checkout paused</h2>
+            <p>
+                Nothing was charged. You can return to your cart and pick up where you left off.
+            </p>
+            <div class="checkout-success-actions">
+                <a href="/cart" class="primary-button">
+                    Back to Cart
+                    <span class="icon icon-arrow-right"></span>
+                </a>
+                <a href="/shop" class="cart-summary-secondary-link">
+                    Keep Browsing
+                    <span class="icon icon-arrow-right"></span>
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <%- include("partials/footer") %>
+
+</div>
+
+</body>
+</html>

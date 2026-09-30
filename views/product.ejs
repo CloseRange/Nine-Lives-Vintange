@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Nine Lives Vintage
+        <% if (product && product.title) { %>
+            — <%= product.title %>
+        <% } %>
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="/css/shop.css"
+    >
+</head>
+
+<body>
+
+<div class="page-container">
+
+    <%- include("partials/navbar", {
+        currentPage: "shop",
+        cartCount: typeof cartCount !== "undefined" ? cartCount : 0
+    }) %>
+
+    <main>
+
+        <% if (product) { %>
+
+            <section class="product-detail-shell">
+
+                <p class="breadcrumb product-breadcrumb">
+                    <a href="/shop">Shop</a>
+                    <span class="icon icon-arrow-right"></span>
+
+                    <% if (product.category_id) { %>
+                        <a href="/shop?category=<%= encodeURIComponent(product.category_id) %>">
+                            <%= product.category_id %>
+                        </a>
+                        <span class="icon icon-arrow-right"></span>
+                    <% } %>
+
+                    <span><%= product.title %></span>
+                </p>
+
+                <div class="product-detail-grid">
+
+                    <section class="product-gallery" aria-label="Product images">
+                        <% const galleryImages = (product.images && product.images.length)
+                            ? product.images
+                            : [{ image_url: '/images/product-placeholder.png' }]; %>
+
+                        <div class="product-main-image-wrap">
+                            <img
+                                id="product-main-image"
+                                class="product-main-image"
+                                src="<%= galleryImages[0].image_url %>"
+                                alt="<%= product.title %>"
+                            >
+                        </div>
+
+                        <% if (galleryImages.length > 1) { %>
+                            <div class="product-thumbs" role="list" aria-label="Product image thumbnails">
+                                <% galleryImages.forEach((image, index) => { %>
+                                    <button
+                                        class="product-thumb <%= index === 0 ? 'active' : '' %>"
+                                        type="button"
+                                        data-image-url="<%= image.image_url %>"
+                                        aria-label="View image <%= index + 1 %>"
+                                    >
+                                        <img src="<%= image.image_url %>" alt="<%= product.title %> image <%= index + 1 %>">
+                                    </button>
+                                <% }) %>
+                            </div>
+                        <% } %>
+                    </section>
+
+                    <section class="product-detail-card" aria-label="Product details">
+
+                        <h1><%= product.title %></h1>
+
+                        <p class="product-detail-price">
+                            $<%= Number(product.price || 0).toFixed(2) %>
+                        </p>
+
+                        <div class="product-detail-meta">
+                            <span>SKU: <strong><%= product.sku %></strong></span>
+
+                            <% if (product.category_id) { %>
+                                <span>Category: <strong><%= product.category_id %></strong></span>
+                            <% } %>
+                        </div>
+
+                        <div class="product-inline-cart-action" aria-label="Add to cart">
+                            <button
+                                type="button"
+                                class="product-image-cart-button"
+                                data-cart-toggle-button
+                                data-sku="<%= product.sku %>"
+                                data-add-image="/images/add-to-cart.png"
+                                data-remove-image="/images/remove-from-cart.png"
+                                data-add-label="Add to Cart"
+                                data-remove-label="Remove from Cart"
+                                aria-pressed="<%= isInCart ? 'true' : 'false' %>"
+                                aria-label="<%= cartActionLabel %>"
+                            >
+                                <img
+                                    src="<%= cartActionImage %>"
+                                    alt="<%= cartActionLabel %>"
+                                    class="product-image-cart-asset"
+                                >
+                            </button>
+                        </div>
+
+                        <% if ((colorChips && colorChips.length) || size || brand) { %>
+                            <div class="product-detail-block">
+                                <h3>Details</h3>
+
+                                <div class="product-key-details">
+                                    <div class="product-key-detail-item">
+                                        <span class="product-key-detail-label">Color</span>
+                                        <strong class="product-key-detail-value">
+                                            <% if (colorChips && colorChips.length) { %>
+                                                <span class="product-color-inline-list">
+                                                    <% colorChips.forEach(color => { %>
+                                                        <span class="product-color-inline-item">
+                                                            <span class="product-color-dot" style="background: <%= color.hex %>;"></span>
+                                                            <span><%= color.label %></span>
+                                                        </span>
+                                                    <% }) %>
+                                                </span>
+                                            <% } else { %>
+                                                N/A
+                                            <% } %>
+                                        </strong>
+                                    </div>
+
+                                    <div class="product-key-detail-item">
+                                        <span class="product-key-detail-label">Size</span>
+                                        <strong class="product-key-detail-value"><%= size || 'N/A' %></strong>
+                                    </div>
+
+                                    <div class="product-key-detail-item">
+                                        <span class="product-key-detail-label">Brand</span>
+                                        <strong class="product-key-detail-value"><%= brand || 'N/A' %></strong>
+                                    </div>
+                                </div>
+                            </div>
+                        <% } %>
+
+                        <% if (product.description) { %>
+                            <div class="product-detail-block">
+                                <h3>Description</h3>
+                                <p class="product-description"><%= product.description %></p>
+                            </div>
+                        <% } %>
+
+                        <% if (specs && specs.length) { %>
+                            <div class="product-detail-block">
+                                <h3>Details</h3>
+
+                                <ul class="product-spec-list">
+                                    <% specs.forEach(spec => { %>
+                                        <li>
+                                            <span><%= spec.label %></span>
+                                            <strong><%= spec.value %></strong>
+                                        </li>
+                                    <% }) %>
+                                </ul>
+                            </div>
+                        <% } %>
+
+                        <a href="/shop" class="product-back-link">
+                            Continue Shopping
+                            <span class="icon icon-arrow-right"></span>
+                        </a>
+
+                    </section>
+
+                </div>
+
+                <div class="product-sticky-actions" aria-label="Purchase actions">
+                    <button
+                        type="button"
+                        class="product-image-cart-button"
+                        data-cart-toggle-button
+                        data-sku="<%= product.sku %>"
+                        data-add-image="/images/add-to-cart.png"
+                        data-remove-image="/images/remove-from-cart.png"
+                        data-add-label="Add to Cart"
+                        data-remove-label="Remove from Cart"
+                        aria-pressed="<%= isInCart ? 'true' : 'false' %>"
+                        aria-label="<%= cartActionLabel %>"
+                    >
+                        <img
+                            src="<%= cartActionImage %>"
+                            alt="<%= cartActionLabel %>"
+                            class="product-image-cart-asset"
+                        >
+                    </button>
+                </div>
+
+                <div class="product-added-popup" aria-hidden="true" data-added-popup>
+                    <img src="/images/added.png" alt="Added to cart">
+                </div>
+
+            </section>
+
+            <% if (relatedProducts && relatedProducts.length) { %>
+                <section class="products-section related-products-section">
+                    <div class="section-heading">
+                        <h2>
+                            You May Also Like
+                            <span class="sparkle">✧</span>
+                        </h2>
+
+                        <a href="/shop" class="view-all">
+                            View All <span class="icon icon-arrow-right"></span>
+                        </a>
+                    </div>
+
+                    <div class="product-grid product-grid-related">
+                        <% relatedProducts.forEach(product => { %>
+                            <article class="product-card">
+
+                                <a
+                                    href="/product/<%= product.sku %>"
+                                    class="product-image"
+                                >
+                                    <% if (product.images?.length > 0) { %>
+                                        <img
+                                            src="<%= product.images[0].image_url %>"
+                                            alt="<%= product.title %>"
+                                            loading="lazy"
+                                            class="product-image-primary"
+                                        >
+                                    <% } else { %>
+                                        <img
+                                            src="/images/product-placeholder.png"
+                                            alt="No image available"
+                                            loading="lazy"
+                                            class="product-image-primary"
+                                        >
+                                    <% } %>
+
+                                    <% if (product.images?.length > 1) { %>
+                                        <img
+                                            src="<%= product.images[1].image_url %>"
+                                            alt="<%= product.title %>"
+                                            loading="lazy"
+                                            class="product-image-secondary"
+                                        >
+                                    <% } %>
+                                </a>
+
+                                <div class="product-info">
+                                    <a
+                                        href="/product/<%= product.sku %>"
+                                        class="product-name"
+                                    >
+                                        <%= product.title %>
+                                    </a>
+
+                                    <p class="product-meta"><%= product.category_id || 'Unisex' %></p>
+
+                                    <div class="product-bottom">
+                                        <strong class="product-price">
+                                            $<%= Number(product.price).toFixed(2) %>
+                                        </strong>
+
+                                        <form
+                                            action="/cart/add"
+                                            method="POST"
+                                        >
+                                            <input
+                                                type="hidden"
+                                                name="sku"
+                                                value="<%= product.sku %>"
+                                            >
+
+                                            <button
+                                                class="add-cart-button"
+                                                type="submit"
+                                                aria-label="Add to cart"
+                                            >
+                                                <span class="icon icon-cart"></span>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </article>
+                        <% }) %>
+                    </div>
+                </section>
+            <% } %>
+
+        <% } else { %>
+
+            <section class="product-not-found">
+                <span class="icon icon-paw"></span>
+
+                <h1>Item not found</h1>
+
+                <p>
+                    This product may have sold or moved. Explore more vintage finds in the shop.
+                </p>
+
+                <a href="/shop" class="primary-button">
+                    Back to Shop
+                    <span class="icon icon-arrow-right"></span>
+                </a>
+            </section>
+
+        <% } %>
+
+    </main>
+
+    <%- include("partials/footer") %>
+
+</div>
+
+<% if (product && product.images && product.images.length > 1) { %>
+<script>
+    (function () {
+        const mainImage = document.getElementById('product-main-image');
+        const thumbs = document.querySelectorAll('.product-thumb');
+
+        if (!mainImage || !thumbs.length) {
+            return;
+        }
+
+        thumbs.forEach((thumb) => {
+            thumb.addEventListener('click', () => {
+                const nextUrl = thumb.getAttribute('data-image-url');
+                if (!nextUrl) {
+                    return;
+                }
+
+                mainImage.src = nextUrl;
+                thumbs.forEach((item) => item.classList.remove('active'));
+                thumb.classList.add('active');
+            });
+        });
+    }());
+
+    (function () {
+        const cartButtons = Array.from(document.querySelectorAll('[data-cart-toggle-button]'));
+        const addedPopup = document.querySelector('[data-added-popup]');
+
+        if (!cartButtons.length) {
+            return;
+        }
+
+        let popupTimer = null;
+
+        const isMobileView = () => window.matchMedia('(max-width: 700px)').matches;
+
+        const showAddedPopup = () => {
+            if (!addedPopup) {
+                return;
+            }
+
+            window.clearTimeout(popupTimer);
+            addedPopup.classList.remove('is-hiding');
+            addedPopup.classList.add('is-visible');
+
+            popupTimer = window.setTimeout(() => {
+                addedPopup.classList.add('is-hiding');
+                addedPopup.classList.remove('is-visible');
+
+                window.setTimeout(() => {
+                    addedPopup.classList.remove('is-hiding');
+                    addedPopup.setAttribute('aria-hidden', 'true');
+                }, 260);
+            }, 2200);
+
+            addedPopup.setAttribute('aria-hidden', 'false');
+        };
+
+        const updateCartCount = (count) => {
+            const cartLink = document.querySelector('.cart-button');
+
+            if (!cartLink) {
+                return;
+            }
+
+            let badge = document.querySelector('[data-cart-count]');
+
+            if (count > 0) {
+                if (!badge) {
+                    badge = document.createElement('span');
+                    badge.className = 'cart-count';
+                    badge.setAttribute('data-cart-count', '');
+                    cartLink.appendChild(badge);
+                }
+
+                badge.textContent = String(count);
+                return;
+            }
+
+            if (badge) {
+                badge.remove();
+            }
+        };
+
+        const setButtonState = (button, inCart) => {
+            const image = button.querySelector('img');
+            const addImage = button.getAttribute('data-add-image') || '/images/add-to-cart.png';
+            const removeImage = button.getAttribute('data-remove-image') || '/images/remove-from-cart.png';
+            const addLabel = button.getAttribute('data-add-label') || 'Add to Cart';
+            const removeLabel = button.getAttribute('data-remove-label') || 'Remove from Cart';
+            const nextLabel = inCart ? removeLabel : addLabel;
+            const mobile = isMobileView();
+
+            button.setAttribute('aria-pressed', inCart ? 'true' : 'false');
+            button.setAttribute('aria-label', nextLabel);
+            button.classList.toggle('is-hidden-mobile', mobile && inCart);
+
+            if (image) {
+                image.src = mobile && inCart ? addImage : (inCart ? removeImage : addImage);
+                image.alt = nextLabel;
+            }
+        };
+
+        cartButtons.forEach((button) => {
+            button.addEventListener('click', async () => {
+                const sku = button.getAttribute('data-sku');
+
+                if (!sku || button.dataset.loading === 'true') {
+                    return;
+                }
+
+                button.dataset.loading = 'true';
+                button.disabled = true;
+
+                try {
+                    const response = await fetch('/cart/toggle', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ sku })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Unable to update cart');
+                    }
+
+                    const data = await response.json();
+                    cartButtons.forEach((cartButton) => setButtonState(cartButton, Boolean(data.inCart)));
+                    updateCartCount(Number(data.cartCount || 0));
+
+                    if (data.inCart) {
+                        showAddedPopup();
+                    }
+                } catch (error) {
+                    console.error('[CART] Toggle failed:', error);
+                } finally {
+                    button.dataset.loading = 'false';
+                    button.disabled = false;
+                }
+            });
+        });
+    }());
+</script>
+<% } %>
+
+</body>
+</html>

@@ -1,6 +1,12 @@
 <%
     const _minorPills = typeof minorPills !== "undefined" ? minorPills : [];
+    const _colorFilters = typeof colorFilters !== "undefined" ? colorFilters : [];
+    const _brandFilters = typeof brandFilters !== "undefined" ? brandFilters : [];
+    const _sizeFilters = typeof sizeFilters !== "undefined" ? sizeFilters : [];
     const _activeCategories = typeof activeCategories !== "undefined" ? activeCategories : [];
+    const _activeColors = typeof activeColors !== "undefined" ? activeColors : [];
+    const _activeBrands = typeof activeBrands !== "undefined" ? activeBrands : [];
+    const _activeSizes = typeof activeSizes !== "undefined" ? activeSizes : [];
     const _activeDepartment = typeof activeDepartment !== "undefined" ? activeDepartment : "";
 %>
 
@@ -13,7 +19,7 @@
         <div class="filters-sidebar-header">
             <h3>Filters</h3>
 
-            <% if (_activeCategories.length) { %>
+            <% if (_activeCategories.length || _activeColors.length || _activeBrands.length || _activeSizes.length) { %>
                 <a
                     href="/shop<%= _activeDepartment ? '?department=' + _activeDepartment : '' %>"
                     class="filters-clear"
@@ -43,6 +49,73 @@
                 </label>
 
             <% }) %>
+
+            <% if (_colorFilters.length) { %>
+                <div class="filter-group">
+                    <div class="filter-group-header">Color</div>
+
+                    <% _colorFilters.forEach(color => { %>
+                        <label class="filter-color-option">
+                            <input
+                                type="checkbox"
+                                name="color"
+                                value="<%= color.label %>"
+                                onchange="this.form.submit()"
+                                <%= _activeColors.includes(color.label) ? "checked" : "" %>
+                            >
+
+                            <span
+                                class="filter-color-swatch"
+                                style="background: <%= color.hex %>;"
+                                aria-hidden="true"
+                            ></span>
+
+                            <span class="filter-color-label"><%= color.label %></span>
+                            <span class="filter-color-count">(<%= color.count %>)</span>
+                        </label>
+                    <% }) %>
+                </div>
+            <% } %>
+
+            <% if (_brandFilters.length) { %>
+                <div class="filter-group">
+                    <div class="filter-group-header">Brand</div>
+
+                    <% _brandFilters.forEach(brand => { %>
+                        <label class="filter-value-option">
+                            <input
+                                type="checkbox"
+                                name="brand"
+                                value="<%= brand.label %>"
+                                onchange="this.form.submit()"
+                                <%= _activeBrands.includes(brand.label) ? "checked" : "" %>
+                            >
+                            <span class="filter-value-label"><%= brand.label %></span>
+                            <span class="filter-value-count">(<%= brand.count %>)</span>
+                        </label>
+                    <% }) %>
+                </div>
+            <% } %>
+
+            <% if (_sizeFilters.length) { %>
+                <div class="filter-group">
+                    <div class="filter-group-header">Size</div>
+
+                    <% _sizeFilters.forEach(size => { %>
+                        <label class="filter-value-option">
+                            <input
+                                type="checkbox"
+                                name="size"
+                                value="<%= size.label %>"
+                                onchange="this.form.submit()"
+                                <%= _activeSizes.includes(size.label) ? "checked" : "" %>
+                            >
+                            <span class="filter-value-label"><%= size.label %></span>
+                            <span class="filter-value-count">(<%= size.count %>)</span>
+                        </label>
+                    <% }) %>
+                </div>
+            <% } %>
 
         </form>
 
@@ -84,6 +157,18 @@
 
                 <% _activeCategories.forEach(cat => { %>
                     <input type="hidden" name="category" value="<%= cat %>">
+                <% }) %>
+
+                <% _activeColors.forEach(color => { %>
+                    <input type="hidden" name="color" value="<%= color %>">
+                <% }) %>
+
+                <% _activeBrands.forEach(brand => { %>
+                    <input type="hidden" name="brand" value="<%= brand %>">
+                <% }) %>
+
+                <% _activeSizes.forEach(size => { %>
+                    <input type="hidden" name="size" value="<%= size %>">
                 <% }) %>
 
                 <select name="sort" onchange="this.form.submit()">
