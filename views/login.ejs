@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Nine Lives Vintage — Login</title>
+
+    <link
+        rel="stylesheet"
+        href="/css/shop.css"
+    >
+</head>
+
+<body>
+
+<div class="page-container">
+
+    <%- include("partials/navbar", {
+        currentPage: currentPage || "account",
+        cartCount: typeof cartCount !== "undefined" ? cartCount : 0
+    }) %>
+
+    <main class="auth-page">
+        <section class="auth-card">
+            <p class="auth-eyebrow">Welcome Back</p>
+            <h1>Sign in to your account</h1>
+
+            <p class="auth-copy">
+                Access your saved details and continue shopping where you left off.
+            </p>
+
+            <% if (formSuccess) { %>
+                <p class="auth-success" role="status"><%= formSuccess %></p>
+            <% } %>
+
+            <% if (formError) { %>
+                <p class="auth-error" role="alert"><%= formError %></p>
+            <% } %>
+
+            <form action="/login" method="POST" class="auth-form">
+                <input type="hidden" name="returnTo" value="<%= returnTo || '/account' %>">
+
+                <label class="auth-field">
+                    <span>Email</span>
+                    <input
+                        type="email"
+                        name="email"
+                        value="<%= (formData && formData.email) || '' %>"
+                        autocomplete="email"
+                        required
+                    >
+                </label>
+
+                <label class="auth-field">
+                    <span>Password</span>
+                    <input
+                        type="password"
+                        name="password"
+                        autocomplete="current-password"
+                        required
+                    >
+                </label>
+
+                <button type="submit" class="primary-button auth-submit">
+                    Sign In
+                    <span class="icon icon-arrow-right"></span>
+                </button>
+            </form>
+
+            <p class="auth-alt-link">
+                New here?
+                <a href="/signup">Create an account</a>
+            </p>
+        </section>
+    </main>
+
+    <%- include("partials/footer") %>
+
+</div>
+
+</body>
+</html>

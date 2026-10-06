@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Nine Lives Vintage — Account</title>
+
+    <link
+        rel="stylesheet"
+        href="/css/shop.css"
+    >
+</head>
+
+<body>
+
+<div class="page-container">
+
+    <%- include("partials/navbar", {
+        currentPage: currentPage || "account",
+        cartCount: typeof cartCount !== "undefined" ? cartCount : 0
+    }) %>
+
+    <main class="account-page">
+        <section class="account-profile-card">
+            <p class="auth-eyebrow">Account</p>
+            <h1>Hi, <%= (user && user.displayName) || 'there' %>.</h1>
+
+            <p class="auth-copy">
+                Signed in as <strong><%= user && user.email %></strong>
+            </p>
+
+            <div class="account-actions">
+                <a href="/shop" class="primary-button auth-submit">
+                    Continue Shopping
+                    <span class="icon icon-arrow-right"></span>
+                </a>
+
+                <form action="/logout" method="POST">
+                    <button type="submit" class="account-logout-button">Log out</button>
+                </form>
+            </div>
+        </section>
+
+        <section class="account-orders-section">
+            <div class="account-orders-header">
+                <h2>Purchase History</h2>
+                <p>Your recent orders and quick item snapshots.</p>
+            </div>
+
+            <% if (ordersError) { %>
+                <p class="account-orders-notice" role="alert"><%= ordersError %></p>
+            <% } %>
+
+            <% if (!ordersError && (!orders || !orders.length)) { %>
+                <div class="account-orders-empty">
+                    <p>No purchases yet. When you place an order, it will show up here.</p>
+                </div>
+            <% } %>
+
+            <% if (!ordersError && orders && orders.length) { %>
+                <div class="account-order-grid">
+                    <% orders.forEach((order) => {
+                        const orderDate = order.created_at
+                            ? new Date(order.created_at).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric'
+                            })
+                            : 'Unknown date';
+                        const totalAmount = Number(order.total_amount || 0).toFixed(2);
+                        const extraItemCount = Math.max(0, (order.itemCount || 0) - 3);
+                    %>
+                        <a href="/account/orders/<%= order.id %>" class="account-order-card">
+                            <div class="account-order-top">
+                                <p class="account-order-number">Order #<%= order.id %></p>
+                                <span class="account-order-status"><%= order.status || 'pending' %></span>
+                            </div>
+
+                            <p class="account-order-date"><%= orderDate %></p>
+
+                            <div class="account-order-thumbs">
+                                <% if (order.previewItems && order.previewItems.length) { %>
+                                    <% order.previewItems.slice(0, 3).forEach((item) => { %>
+                                        <span class="account-order-thumb-wrap">
+                                            <img
+                                                src="<%= item.imageUrl || '/images/product-placeholder.png' %>"
+                                                alt="<%= item.title %>"
+                                                class="account-order-thumb"
+                                            >
+                                        </span>
+                                    <% }) %>
+                                <% } else { %>
+                                    <span class="account-order-thumb-wrap is-placeholder">
+                                        <span class="icon icon-paw"></span>
+                                    </span>
+                                <% } %>
+
+                                <% if (extraItemCount > 0) { %>
+                                    <span class="account-order-more">+<%= extraItemCount %></span>
+                                <% } %>
+                            </div>
+
+                            <div class="account-order-bottom">
+                                <p><strong><%= order.itemCount || 0 %></strong> item<%= (order.itemCount || 0) === 1 ? '' : 's' %></p>
+                                <p class="account-order-total">$<%= totalAmount %></p>
+                            </div>
+                        </a>
+                    <% }) %>
+                </div>
+            <% } %>
+        </section>
+    </main>
+
+    <%- include("partials/footer") %>
+
+</div>
+
+</body>
+</html>

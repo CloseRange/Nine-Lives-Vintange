@@ -30,6 +30,7 @@
     "express": "^4.21.2",
     "express-session": "^1.18.1",
     "form-data": "^4.0.6",
+    "markdown-it": "^15.0.2",
     "multer": "^2.2.0",
     "pdfkit": "^0.17.2",
     "sharp": "^0.35.4",

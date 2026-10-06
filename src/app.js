@@ -1,8 +1,10 @@
 
 const express = require('express');
 const path = require('path');
+const fs = require('fs/promises');
 const session = require('express-session');
 const Stripe = require('stripe');
+const MarkdownIt = require('markdown-it');
     
 const isProduction = process.env.NODE_ENV === 'production';
 const app = express();
@@ -15,10 +17,26 @@ const supabase = createClient(
     supabaseKey,
     { realtime: { transport: WebSocket } } // Node < 22 lacks a native WebSocket the realtime client can use
 );
+const supabaseAuthKey = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseAuth = supabaseAuthKey
+    ? createClient(process.env.SUPABASE_URL, supabaseAuthKey, {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false,
+            detectSessionInUrl: false
+        }
+    })
+    : null;
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 const stripe = stripeSecretKey ? new Stripe(stripeSecretKey) : null;
 const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
+const markdownRenderer = new MarkdownIt({
+    html: false,
+    linkify: true,
+    breaks: true
+});
+const markdownPagesDirectory = path.join(__dirname, '../content/pages');
 
 const SHIPPING_START = Number(process.env.SHIPPING_START || 6);
 const SHIPPING_ADD = Number(process.env.SHIPPING_ADD || 2);
@@ -651,6 +669,314 @@ const archivePurchasedListings = async (purchasedSkus) => {
 
 const wantsJsonResponse = (req) => String(req.get('accept') || '').includes('application/json');
 
+const sanitizeReturnTo = (value, fallback = '/account') => {
+    const returnTo = String(value || '').trim();
+
+    if (!returnTo) {
+        return fallback;
+    }
+
+    if (!returnTo.startsWith('/') || returnTo.startsWith('//')) {
+        return fallback;
+    }
+
+    return returnTo;
+};
+
+const buildDisplayNameFromUser = (user, fallbackEmail = '') => {
+    const metadata = user && typeof user.user_metadata === 'object' ? user.user_metadata : {};
+    const metadataName = String(metadata.display_name || metadata.full_name || '').trim();
+
+    if (metadataName) {
+        return metadataName;
+    }
+
+    const emailPrefix = String(fallbackEmail || '').split('@')[0];
+    return emailPrefix || 'Account';
+};
+
+const buildSessionUserFromSupabaseUser = (user, fallbackEmail = '') => {
+    const email = String((user && user.email) || fallbackEmail || '').trim().toLowerCase();
+
+    return {
+        id: String((user && user.id) || '').trim(),
+        email,
+        displayName: buildDisplayNameFromUser(user, email)
+    };
+};
+
+const getAuthErrorMessage = (error, fallback) => {
+    const rawMessage = String((error && error.message) || '').toLowerCase();
+
+    if (!rawMessage) {
+        return fallback;
+    }
+
+    if (rawMessage.includes('invalid login credentials')) {
+        return 'Invalid email or password.';
+    }
+
+    if (rawMessage.includes('email not confirmed')) {
+        return 'Please confirm your email before signing in.';
+    }
+
+    if (rawMessage.includes('user already registered')) {
+        return 'An account with this email already exists. Sign in instead.';
+    }
+
+    if (rawMessage.includes('signups not allowed')) {
+        return 'Signups are currently disabled.';
+    }
+
+    return fallback;
+};
+
+const sanitizePageSlug = (value) => String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-_]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^[-_]+|[-_]+$/g, '');
+
+const markdownToHtml = (markdown) => markdownRenderer.render(String(markdown || ''));
+
+const extractMarkdownTitle = (markdown, fallbackTitle) => {
+    const match = String(markdown || '').match(/^#\s+(.+)$/m);
+
+    if (match && match[1]) {
+        return match[1].trim();
+    }
+
+    return fallbackTitle;
+};
+
+const loadMarkdownPage = async (slug) => {
+    const pageSlug = sanitizePageSlug(slug);
+
+    if (!pageSlug) {
+        return null;
+    }
+
+    const filePath = path.join(markdownPagesDirectory, `${pageSlug}.md`);
+
+    try {
+        const markdown = await fs.readFile(filePath, 'utf8');
+
+        return {
+            slug: pageSlug,
+            filePath,
+            markdown,
+            title: extractMarkdownTitle(markdown, pageSlug.replace(/-/g, ' ').replace(/\b\w/g, char => char.toUpperCase()))
+        };
+    } catch (error) {
+        if (error.code === 'ENOENT') {
+            return null;
+        }
+
+        throw error;
+    }
+};
+
+const renderMarkdownPage = (res, {
+    title,
+    markdown,
+    description = '',
+    backLinkHref = '/shop',
+    backLinkLabel = 'Back to Shop',
+    currentPage = ''
+}) => {
+    return res.render('markdown-page', {
+        currentPage,
+        pageTitle: title,
+        pageDescription: description,
+        contentHtml: markdownToHtml(markdown),
+        backLinkHref,
+        backLinkLabel
+    });
+};
+
+const normalizeContactField = (value) => String(value || '').trim();
+
+const buildContactMessageBody = ({ name, email, message, user }) => {
+    const lines = [];
+    const cleanName = normalizeContactField(name);
+    const cleanEmail = normalizeContactField(email);
+    const cleanMessage = normalizeContactField(message);
+
+    if (cleanName) {
+        lines.push(`Name: ${cleanName}`);
+    }
+
+    if (cleanEmail) {
+        lines.push(`Email: ${cleanEmail}`);
+    }
+
+    if (user && user.id) {
+        lines.push(`User ID: ${user.id}`);
+    }
+
+    lines.push('');
+    lines.push(cleanMessage);
+
+    return lines.join('\n').trim();
+};
+
+const renderContactPage = (res, {
+    currentUser,
+    formData,
+    formError = null,
+    formSuccess = null,
+    statusCode = 200
+}) => {
+    return res.status(statusCode).render('contact', {
+        currentPage: '',
+        cartCount: typeof formData?.cartCount !== 'undefined' ? formData.cartCount : 0,
+        currentUser,
+        formData,
+        formError,
+        formSuccess
+    });
+};
+
+const loadListingSnapshotsBySkus = async (skus) => {
+    const uniqueSkus = [...new Set((skus || []).map(sku => String(sku || '').trim()).filter(Boolean))];
+
+    if (!uniqueSkus.length) {
+        return {
+            listingBySku: new Map(),
+            firstImageBySku: new Map()
+        };
+    }
+
+    const [listingQuery, imageQuery] = await Promise.all([
+        supabase
+            .from('listing')
+            .select('sku,title,price')
+            .in('sku', uniqueSkus),
+        supabase
+            .from('listing_image')
+            .select('id,sku,image_url')
+            .in('sku', uniqueSkus)
+            .order('id', { ascending: true })
+    ]);
+
+    if (listingQuery.error) {
+        throw listingQuery.error;
+    }
+
+    if (imageQuery.error) {
+        throw imageQuery.error;
+    }
+
+    const listingBySku = new Map();
+    (listingQuery.data || []).forEach((listing) => {
+        if (!listing || !listing.sku) {
+            return;
+        }
+
+        listingBySku.set(listing.sku, listing);
+    });
+
+    const firstImageBySku = new Map();
+    (imageQuery.data || []).forEach((imageRow) => {
+        const sku = imageRow && imageRow.sku ? imageRow.sku : '';
+        if (!sku || firstImageBySku.has(sku)) {
+            return;
+        }
+
+        firstImageBySku.set(sku, imageRow.image_url || null);
+    });
+
+    return {
+        listingBySku,
+        firstImageBySku
+    };
+};
+
+const enrichOrderItems = (orderItemRows, listingBySku, firstImageBySku) =>
+    (orderItemRows || []).map((itemRow) => {
+        const sku = String((itemRow && itemRow.sku) || '').trim();
+        const listing = listingBySku.get(sku) || null;
+        const fallbackTitle = sku ? `SKU ${sku}` : 'Vintage Item';
+
+        return {
+            sku,
+            title: listing && listing.title ? listing.title : fallbackTitle,
+            price: listing && typeof listing.price !== 'undefined' ? Number(listing.price || 0) : null,
+            imageUrl: firstImageBySku.get(sku) || null
+        };
+    });
+
+const loadOrderHistoryForUser = async (userId) => {
+    const orderQuery = await supabase
+        .from('order_info')
+        .select(`
+            id,
+            status,
+            customer_name,
+            subtotal,
+            shipping_amount,
+            tax_amount,
+            total_amount,
+            shipping_city,
+            shipping_state,
+            shipping_country,
+            created_at,
+            paid_at,
+            shipped_at,
+            delivered_at,
+            cancelled_at
+        `)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+    if (orderQuery.error) {
+        throw orderQuery.error;
+    }
+
+    const orders = orderQuery.data || [];
+
+    if (!orders.length) {
+        return [];
+    }
+
+    const orderIds = orders.map(order => order.id);
+
+    const orderItemQuery = await supabase
+        .from('order_info_item')
+        .select('order_info_id,sku')
+        .in('order_info_id', orderIds);
+
+    if (orderItemQuery.error) {
+        throw orderItemQuery.error;
+    }
+
+    const orderItemRows = orderItemQuery.data || [];
+    const skus = orderItemRows.map(item => item.sku);
+    const { listingBySku, firstImageBySku } = await loadListingSnapshotsBySkus(skus);
+
+    const orderItemsByOrderId = new Map();
+    orderItemRows.forEach((itemRow) => {
+        const key = itemRow.order_info_id;
+        if (!orderItemsByOrderId.has(key)) {
+            orderItemsByOrderId.set(key, []);
+        }
+        orderItemsByOrderId.get(key).push(itemRow);
+    });
+
+    return orders.map((order) => {
+        const rawItems = orderItemsByOrderId.get(order.id) || [];
+        const items = enrichOrderItems(rawItems, listingBySku, firstImageBySku);
+
+        return {
+            ...order,
+            itemCount: items.length,
+            items,
+            previewItems: items.slice(0, 4)
+        };
+    });
+};
+
 const sendCartResponse = (req, res, payload) => {
     if (wantsJsonResponse(req)) {
         return res.json(payload);
@@ -723,6 +1049,10 @@ app.use(
 	})
 );
 app.use((req, res, next) => {
+    res.locals.currentUser = req.session.user || null;
+    next();
+});
+app.use((req, res, next) => {
     res.locals.cartCount = Array.isArray(req.session.cart) ? req.session.cart.length : 0;
     res.locals.cartSkus = getSessionCart(req);
     next();
@@ -784,6 +1114,479 @@ app.post('/cart/toggle', (req, res) => {
 app.get('/', (req, res) => {
     return res.redirect('/shop');
 });
+
+app.get('/login', (req, res) => {
+    if (req.session.user) {
+        const returnTo = sanitizeReturnTo(req.query.returnTo, '/account');
+        return res.redirect(returnTo);
+    }
+
+    return res.render('login', {
+        currentPage: 'account',
+        returnTo: sanitizeReturnTo(req.query.returnTo, '/account'),
+        formSuccess: null,
+        formError: null,
+        formData: {
+            email: ''
+        }
+    });
+});
+
+app.post('/login', async (req, res) => {
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const password = String(req.body.password || '').trim();
+    const returnTo = sanitizeReturnTo(req.body.returnTo, '/account');
+
+    if (!supabaseAuth) {
+        return res.status(500).render('login', {
+            currentPage: 'account',
+            returnTo,
+            formSuccess: null,
+            formError: 'Authentication is not configured on this server.',
+            formData: {
+                email
+            }
+        });
+    }
+
+    if (!email || !password) {
+        return res.status(400).render('login', {
+            currentPage: 'account',
+            returnTo,
+            formSuccess: null,
+            formError: 'Please enter both email and password.',
+            formData: {
+                email
+            }
+        });
+    }
+
+    const { data, error } = await supabaseAuth.auth.signInWithPassword({
+        email,
+        password
+    });
+
+    if (error || !data || !data.user) {
+        return res.status(401).render('login', {
+            currentPage: 'account',
+            returnTo,
+            formSuccess: null,
+            formError: getAuthErrorMessage(error, 'Unable to sign in. Please try again.'),
+            formData: {
+                email
+            }
+        });
+    }
+
+    req.session.user = buildSessionUserFromSupabaseUser(data.user, email);
+
+    return req.session.save(() => res.redirect(returnTo));
+});
+
+app.get('/signup', (req, res) => {
+    if (req.session.user) {
+        return res.redirect('/account');
+    }
+
+    return res.render('signup', {
+        currentPage: 'account',
+        formError: null,
+        formData: {
+            email: '',
+            displayName: ''
+        }
+    });
+});
+
+app.post('/signup', async (req, res) => {
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const password = String(req.body.password || '').trim();
+    const displayName = String(req.body.displayName || '').trim();
+
+    if (!supabaseAuth) {
+        return res.status(500).render('signup', {
+            currentPage: 'account',
+            formError: 'Authentication is not configured on this server.',
+            formData: {
+                email,
+                displayName
+            }
+        });
+    }
+
+    if (!email || !password) {
+        return res.status(400).render('signup', {
+            currentPage: 'account',
+            formError: 'Please enter an email and password.',
+            formData: {
+                email,
+                displayName
+            }
+        });
+    }
+
+    const { data, error } = await supabaseAuth.auth.signUp({
+        email,
+        password,
+        options: {
+            data: {
+                display_name: displayName || email.split('@')[0]
+            }
+        }
+    });
+
+    if (error) {
+        return res.status(400).render('signup', {
+            currentPage: 'account',
+            formError: getAuthErrorMessage(error, 'Unable to create account. Please try again.'),
+            formData: {
+                email,
+                displayName
+            }
+        });
+    }
+
+    if (data && data.user && data.session) {
+        req.session.user = buildSessionUserFromSupabaseUser(data.user, email);
+        return req.session.save(() => res.redirect('/account'));
+    }
+
+    return res.status(200).render('login', {
+        currentPage: 'account',
+        returnTo: '/account',
+        formSuccess: 'Account created. Check your email to confirm your address, then sign in.',
+        formError: null,
+        formData: {
+            email
+        }
+    });
+});
+
+app.post('/logout', (req, res) => {
+    req.session.user = null;
+    return req.session.save(() => res.redirect('/shop'));
+});
+
+app.get('/account', async (req, res) => {
+    if (!req.session.user) {
+        return res.redirect('/login?returnTo=%2Faccount');
+    }
+
+    try {
+        const orders = await loadOrderHistoryForUser(req.session.user.id);
+
+        return res.render('account', {
+            currentPage: 'account',
+            user: req.session.user,
+            orders,
+            ordersError: null
+        });
+    } catch (error) {
+        console.error('[ACCOUNT] Failed to load order history:', error);
+
+        return res.status(500).render('account', {
+            currentPage: 'account',
+            user: req.session.user,
+            orders: [],
+            ordersError: 'We could not load your order history right now. Please try again shortly.'
+        });
+    }
+});
+
+app.get('/about', async (req, res) => {
+    try {
+        const page = await loadMarkdownPage('about');
+
+        if (!page) {
+            return res.status(404).render('markdown-page', {
+                currentPage: '',
+                pageTitle: 'About',
+                pageDescription: '',
+                contentHtml: markdownToHtml('# About\n\nThis page is not available yet.'),
+                backLinkHref: '/shop',
+                backLinkLabel: 'Back to Shop'
+            });
+        }
+
+        return renderMarkdownPage(res, {
+            title: page.title || 'About',
+            markdown: page.markdown,
+            description: '',
+            backLinkHref: '/shop',
+            backLinkLabel: 'Back to Shop',
+            currentPage: ''
+        });
+    } catch (error) {
+        console.error('[ABOUT] Failed to load markdown page:', error);
+
+        return res.status(500).render('markdown-page', {
+            currentPage: '',
+            pageTitle: 'About',
+            pageDescription: '',
+            contentHtml: markdownToHtml('# About\n\nWe could not load this page right now.'),
+            backLinkHref: '/shop',
+            backLinkLabel: 'Back to Shop'
+        });
+    }
+});
+
+app.get('/contact', (req, res) => {
+    const currentUser = req.session.user || null;
+
+    return renderContactPage(res, {
+        currentUser,
+        formData: {
+            name: currentUser && currentUser.displayName ? currentUser.displayName : '',
+            email: currentUser && currentUser.email ? currentUser.email : '',
+            message: ''
+        }
+    });
+});
+
+app.post('/contact', async (req, res) => {
+    const currentUser = req.session.user || null;
+    const name = normalizeContactField(req.body.name);
+    const email = normalizeContactField(req.body.email);
+    const message = normalizeContactField(req.body.message);
+
+    if (!message) {
+        return renderContactPage(res, {
+            currentUser,
+            formData: {
+                name,
+                email,
+                message
+            },
+            formError: 'Please enter a message before sending.',
+            statusCode: 400
+        });
+    }
+
+    const messageRecord = buildContactMessageBody({
+        name,
+        email,
+        message,
+        user: currentUser
+    });
+
+    try {
+        const insertPayload = {
+            message: messageRecord
+        };
+
+        if (currentUser && currentUser.id) {
+            insertPayload.user_id = currentUser.id;
+        }
+
+        const insertedMessage = await supabase
+            .from('messages')
+            .insert(insertPayload)
+            .select('id')
+            .single();
+
+        if (insertedMessage.error) {
+            throw insertedMessage.error;
+        }
+
+        return renderContactPage(res, {
+            currentUser,
+            formData: {
+                name: currentUser && currentUser.displayName ? currentUser.displayName : '',
+                email: currentUser && currentUser.email ? currentUser.email : '',
+                message: ''
+            },
+            formSuccess: 'Thanks. Your message has been sent.'
+        });
+    } catch (error) {
+        console.error('[CONTACT] Failed to save message:', error);
+
+        return renderContactPage(res, {
+            currentUser,
+            formData: {
+                name,
+                email,
+                message
+            },
+            formError: 'We could not send your message right now. Please try again shortly.',
+            statusCode: 500
+        });
+    }
+});
+
+const registerMarkdownPageRoute = (routePath, slug, fallbackTitle) => {
+    app.get(routePath, async (req, res) => {
+        try {
+            const page = await loadMarkdownPage(slug);
+
+            if (!page) {
+                return res.status(404).render('markdown-page', {
+                    currentPage: '',
+                    pageTitle: fallbackTitle,
+                    pageDescription: '',
+                    contentHtml: markdownToHtml(`# ${fallbackTitle}\n\nThis page is not available yet.`),
+                    backLinkHref: '/shop',
+                    backLinkLabel: 'Back to Shop'
+                });
+            }
+
+            return renderMarkdownPage(res, {
+                title: page.title || fallbackTitle,
+                markdown: page.markdown,
+                description: '',
+                backLinkHref: '/shop',
+                backLinkLabel: 'Back to Shop',
+                currentPage: ''
+            });
+        } catch (error) {
+            console.error(`[PAGE] Failed to load ${slug} markdown page:`, error);
+
+            return res.status(500).render('markdown-page', {
+                currentPage: '',
+                pageTitle: fallbackTitle,
+                pageDescription: '',
+                contentHtml: markdownToHtml(`# ${fallbackTitle}\n\nWe could not load this page right now.`),
+                backLinkHref: '/shop',
+                backLinkLabel: 'Back to Shop'
+            });
+        }
+    });
+};
+
+registerMarkdownPageRoute('/shipping', 'shipping', 'Shipping');
+registerMarkdownPageRoute('/returns', 'returns', 'Returns');
+registerMarkdownPageRoute('/faq', 'faq', 'FAQ');
+
+app.get('/pages/:slug', async (req, res) => {
+    const page = await loadMarkdownPage(req.params.slug);
+
+    if (!page) {
+        return res.status(404).render('markdown-page', {
+            currentPage: '',
+            pageTitle: 'Page not found',
+            pageDescription: '',
+            contentHtml: markdownToHtml('# Page not found\n\nThe requested markdown page does not exist.'),
+            backLinkHref: '/shop',
+            backLinkLabel: 'Back to Shop'
+        });
+    }
+
+    return renderMarkdownPage(res, {
+        title: page.title,
+        markdown: page.markdown,
+        description: '',
+        backLinkHref: '/shop',
+        backLinkLabel: 'Back to Shop',
+        currentPage: ''
+    });
+});
+
+app.get('/account/orders/:orderId', async (req, res) => {
+    if (!req.session.user) {
+        return res.redirect('/login?returnTo=%2Faccount');
+    }
+
+    const orderId = Number.parseInt(String(req.params.orderId || '').trim(), 10);
+    if (!Number.isFinite(orderId) || orderId <= 0) {
+        return res.status(404).render('account-order', {
+            currentPage: 'account',
+            user: req.session.user,
+            order: null,
+            orderItems: [],
+            notFound: true,
+            loadError: null
+        });
+    }
+
+    try {
+        const orderQuery = await supabase
+            .from('order_info')
+            .select(`
+                id,
+                user_id,
+                stripe_session_id,
+                stripe_payment_intent_id,
+                status,
+                customer_name,
+                customer_email,
+                customer_phone,
+                shipping_address_line1,
+                shipping_address_line2,
+                shipping_city,
+                shipping_state,
+                shipping_postal_code,
+                shipping_country,
+                subtotal,
+                shipping_amount,
+                tax_amount,
+                total_amount,
+                carrier,
+                shipping_service,
+                tracking_number,
+                shipping_label_url,
+                postage_cost,
+                created_at,
+                paid_at,
+                shipped_at,
+                delivered_at,
+                cancelled_at
+            `)
+            .eq('id', orderId)
+            .eq('user_id', req.session.user.id)
+            .maybeSingle();
+
+        if (orderQuery.error) {
+            throw orderQuery.error;
+        }
+
+        const order = orderQuery.data;
+
+        if (!order) {
+            return res.status(404).render('account-order', {
+                currentPage: 'account',
+                user: req.session.user,
+                order: null,
+                orderItems: [],
+                notFound: true,
+                loadError: null
+            });
+        }
+
+        const orderItemQuery = await supabase
+            .from('order_info_item')
+            .select('order_info_id,sku')
+            .eq('order_info_id', order.id);
+
+        if (orderItemQuery.error) {
+            throw orderItemQuery.error;
+        }
+
+        const orderItemRows = orderItemQuery.data || [];
+        const skus = orderItemRows.map(row => row.sku);
+        const { listingBySku, firstImageBySku } = await loadListingSnapshotsBySkus(skus);
+        const orderItems = enrichOrderItems(orderItemRows, listingBySku, firstImageBySku);
+
+        return res.render('account-order', {
+            currentPage: 'account',
+            user: req.session.user,
+            order,
+            orderItems,
+            notFound: false,
+            loadError: null
+        });
+    } catch (error) {
+        console.error('[ACCOUNT] Failed to load order detail:', error);
+
+        return res.status(500).render('account-order', {
+            currentPage: 'account',
+            user: req.session.user,
+            order: null,
+            orderItems: [],
+            notFound: false,
+            loadError: 'We could not load this order right now. Please try again shortly.'
+        });
+    }
+});
+
 app.get('/shop', async (req, res) => {
     try {
 
@@ -1393,3 +2196,5 @@ module.exports.buildColorCounts = buildColorCounts;
 module.exports.extractProductBrand = extractProductBrand;
 module.exports.extractProductSize = extractProductSize;
 module.exports.buildFacetCounts = buildFacetCounts;
+module.exports.loadMarkdownPage = loadMarkdownPage;
+module.exports.renderMarkdownPage = renderMarkdownPage;

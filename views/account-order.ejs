@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Nine Lives Vintage — Order Details</title>
+
+    <link
+        rel="stylesheet"
+        href="/css/shop.css"
+    >
+</head>
+
+<body>
+
+<div class="page-container">
+
+    <%- include("partials/navbar", {
+        currentPage: currentPage || "account",
+        cartCount: typeof cartCount !== "undefined" ? cartCount : 0
+    }) %>
+
+    <main class="account-page account-order-page">
+        <section class="account-order-detail-shell">
+            <div class="account-order-detail-header">
+                <a href="/account" class="account-back-link">
+                    <span class="icon icon-arrow-right"></span>
+                    Back to Account
+                </a>
+
+                <% if (order) { %>
+                    <h1>Order #<%= order.id %></h1>
+                    <p>
+                        <%= order.created_at ? new Date(order.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Unknown date' %>
+                        · <strong><%= order.status || 'pending' %></strong>
+                    </p>
+                <% } else if (notFound) { %>
+                    <h1>Order not found</h1>
+                    <p>We could not find that order under your account.</p>
+                <% } else if (loadError) { %>
+                    <h1>Could not load order</h1>
+                    <p><%= loadError %></p>
+                <% } %>
+            </div>
+
+            <% if (order) { %>
+                <section class="account-order-detail-grid">
+                    <article class="account-order-detail-card">
+                        <h2>Items</h2>
+
+                        <% if (orderItems && orderItems.length) { %>
+                            <div class="account-order-item-list">
+                                <% orderItems.forEach((item) => { %>
+                                    <a href="/product/<%= item.sku %>" class="account-order-item-row">
+                                        <img
+                                            src="<%= item.imageUrl || '/images/product-placeholder.png' %>"
+                                            alt="<%= item.title %>"
+                                            class="account-order-item-image"
+                                        >
+
+                                        <div class="account-order-item-copy">
+                                            <h3><%= item.title %></h3>
+                                            <p>SKU: <%= item.sku %></p>
+                                        </div>
+
+                                        <strong>
+                                            <%= item.price === null ? 'Sold out' : '$' + Number(item.price || 0).toFixed(2) %>
+                                        </strong>
+                                    </a>
+                                <% }) %>
+                            </div>
+                        <% } else { %>
+                            <p class="account-order-muted">No line items were found for this order.</p>
+                        <% } %>
+                    </article>
+
+                    <article class="account-order-detail-card account-order-summary-card">
+                        <h2>Summary</h2>
+
+                        <div class="account-order-meta-list">
+                            <div>
+                                <span>Subtotal</span>
+                                <strong>$<%= Number(order.subtotal || 0).toFixed(2) %></strong>
+                            </div>
+
+                            <div>
+                                <span>Shipping</span>
+                                <strong>$<%= Number(order.shipping_amount || 0).toFixed(2) %></strong>
+                            </div>
+
+                            <div>
+                                <span>Tax</span>
+                                <strong>$<%= Number(order.tax_amount || 0).toFixed(2) %></strong>
+                            </div>
+
+                            <div class="account-order-total-row">
+                                <span>Total</span>
+                                <strong>$<%= Number(order.total_amount || 0).toFixed(2) %></strong>
+                            </div>
+                        </div>
+
+                        <h2>Shipping</h2>
+                        <p class="account-order-address">
+                            <strong><%= order.customer_name %></strong><br>
+                            <%= order.shipping_address_line1 %><br>
+                            <% if (order.shipping_address_line2) { %><%= order.shipping_address_line2 %><br><% } %>
+                            <%= order.shipping_city %>, <%= order.shipping_state %> <%= order.shipping_postal_code %><br>
+                            <%= order.shipping_country %>
+                        </p>
+
+                        <% if (order.tracking_number) { %>
+                            <div class="account-order-tracking">
+                                <p><strong>Tracking</strong></p>
+                                <p>
+                                    <%= order.carrier || 'Carrier' %>
+                                    <% if (order.shipping_service) { %>
+                                        · <%= order.shipping_service %>
+                                    <% } %>
+                                </p>
+                                <p><%= order.tracking_number %></p>
+                            </div>
+                        <% } %>
+                    </article>
+                </section>
+            <% } %>
+        </section>
+    </main>
+
+    <%- include("partials/footer") %>
+
+</div>
+
+</body>
+</html>

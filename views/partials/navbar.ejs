@@ -1,5 +1,5 @@
 <header class="site-header">
-    <a href="/" class="brand" aria-label="Nine Lives Vintage home">
+    <a href="/shop" class="brand" aria-label="Nine Lives Vintage shop">
         <img
             src="/images/nine-lives-name.png"
             alt="Nine Lives Vintage"
@@ -7,19 +7,22 @@
         >
     </a>
 
-    <nav class="desktop-nav" aria-label="Main navigation">
-        <a href="/" class="<%= currentPage === 'home' ? 'active' : '' %>">
-            Home
-        </a>
+    <% const navActiveDepartment = typeof activeDepartment !== 'undefined' ? activeDepartment : ''; %>
+    <% const isShopActive = currentPage === 'shop' && !navActiveDepartment; %>
+    <% const isWomenActive = currentPage === 'shop' && navActiveDepartment === 'women'; %>
+    <% const isMenActive = currentPage === 'shop' && navActiveDepartment === 'men'; %>
+    <% const isAccessoriesActive = currentPage === 'shop' && navActiveDepartment === 'accessories'; %>
+    <% const isNewArrivalsActive = currentPage === 'shop' && navActiveDepartment === 'new-arrivals'; %>
 
-        <a href="/shop" class="<%= currentPage === 'shop' ? 'active' : '' %>">
+    <nav class="desktop-nav" aria-label="Main navigation">
+        <a href="/shop" class="<%= isShopActive ? 'active' : '' %>">
             Shop
         </a>
 
-        <a href="/shop?sort=newest">New Arrivals</a>
-        <a href="/shop?department=women">Women</a>
-        <a href="/shop?department=men">Men</a>
-        <a href="/shop?category=accessories">Accessories</a>
+        <a href="/shop?department=women" class="<%= isWomenActive ? 'active' : '' %>">Women</a>
+        <a href="/shop?department=men" class="<%= isMenActive ? 'active' : '' %>">Men</a>
+        <a href="/shop?department=accessories" class="<%= isAccessoriesActive ? 'active' : '' %>">Accessories</a>
+        <a href="/shop?department=new-arrivals" class="<%= isNewArrivalsActive ? 'active' : '' %>">New Arrivals</a>
         <a href="/about">About</a>
     </nav>
 
@@ -38,9 +41,18 @@
     </form>
 
     <div class="header-actions">
-        <a href="/account" class="icon-button" aria-label="Account">
-            <span class="icon icon-user"></span>
-        </a>
+        <% if (currentUser) { %>
+            <a href="/account" class="account-pill" aria-label="Account">
+                <span class="account-pill-name"><%= currentUser.displayName || currentUser.email || 'Account' %></span>
+                <span class="account-pill-icon-wrap" aria-hidden="true">
+                    <span class="icon icon-user"></span>
+                </span>
+            </a>
+        <% } else { %>
+            <a href="/account" class="icon-button" aria-label="Account">
+                <span class="icon icon-user"></span>
+            </a>
+        <% } %>
 
         <a href="/cart" class="icon-button cart-button" aria-label="Cart" data-cart-button>
             <span class="icon icon-cart"></span>

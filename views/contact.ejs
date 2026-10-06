@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Nine Lives Vintage — Contact</title>
+
+    <link
+        rel="stylesheet"
+        href="/css/shop.css"
+    >
+</head>
+
+<body>
+
+<div class="page-container">
+
+    <%- include("partials/navbar", {
+        currentPage: currentPage || "",
+        cartCount: typeof cartCount !== "undefined" ? cartCount : 0,
+        currentUser: currentUser || null
+    }) %>
+
+    <main class="contact-page-shell">
+        <section class="contact-hero-card">
+            <a href="/shop" class="contact-back-link">
+                <span class="icon icon-arrow-right"></span>
+                <span>Back to Shop</span>
+            </a>
+
+            <p class="contact-eyebrow">Contact</p>
+            <h1>Send us a message</h1>
+            <p class="contact-intro">
+                Questions about an order, a product, or the site? Send a note and we’ll reply as soon as we can.
+            </p>
+
+            <% if (currentUser) { %>
+                <p class="contact-signed-in-note">
+                    Signed in as <strong><%= currentUser.displayName || currentUser.email %></strong>
+                </p>
+            <% } %>
+        </section>
+
+        <section class="contact-layout">
+            <article class="contact-form-card">
+                <% if (formSuccess) { %>
+                    <p class="contact-success" role="status"><%= formSuccess %></p>
+                <% } %>
+
+                <% if (formError) { %>
+                    <p class="contact-error" role="alert"><%= formError %></p>
+                <% } %>
+
+                <form action="/contact" method="POST" class="contact-form">
+                    <label class="contact-field">
+                        <span>Name</span>
+                        <input
+                            type="text"
+                            name="name"
+                            value="<%= (formData && formData.name) || '' %>"
+                            autocomplete="name"
+                        >
+                    </label>
+
+                    <label class="contact-field">
+                        <span>Email</span>
+                        <input
+                            type="email"
+                            name="email"
+                            value="<%= (formData && formData.email) || '' %>"
+                            autocomplete="email"
+                        >
+                    </label>
+
+                    <label class="contact-field contact-field-message">
+                        <span>Message</span>
+                        <textarea
+                            name="message"
+                            rows="8"
+                            placeholder="How can we help?"
+                            required
+                        ><%= (formData && formData.message) || '' %></textarea>
+                    </label>
+
+                    <button type="submit" class="primary-button contact-submit-button">
+                        Send Message
+                        <span class="icon icon-arrow-right"></span>
+                    </button>
+                </form>
+            </article>
+
+            <aside class="contact-info-card">
+                <h2>What to include</h2>
+                <ul>
+                    <li>Your order number, if you have one</li>
+                    <li>The item name or SKU</li>
+                    <li>A short description of the issue or question</li>
+                    <li>Photos if the message is about condition or damage</li>
+                </ul>
+
+                <h2>Response time</h2>
+                <p>
+                    We try to reply as soon as possible, but response times can vary depending on volume.
+                </p>
+            </aside>
+        </section>
+    </main>
+
+    <%- include("partials/footer") %>
+
+</div>
+
+</body>
+</html>
